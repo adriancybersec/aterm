@@ -24,7 +24,7 @@ export default function AboutPage() {
             Five lessons are live. Free covers the first two. Pro opens the rest. Plus shows the worked command. Your plan and ticks stay on this device.
           </p>
           <p>
-            Case is a practice log for Brightwater Office. Each line is an IP address and what that person did. You finish with the log lines, a short finding, and a resume note you can copy. A new case changes the IP addresses, which ones look wrong, and the website names. The questions stay the same.
+            Case is a practice log for Brightwater Office. Each line is an IP address and what that person did. You finish with the log lines, a short finding, and a resume note you can copy. A new case changes the questions, the IP addresses, which ones look wrong, and the website names.
           </p>
         </div>
         <div className="mt-8 flex flex-wrap gap-6 text-sm">

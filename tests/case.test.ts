@@ -3,6 +3,7 @@ import { gradeCase } from "../src/lib/case/grade";
 import {
   accessLog,
   allowList,
+  answerValue,
   briefText,
   COMPANY_SITE,
   evidenceTimeline,
@@ -14,10 +15,12 @@ import {
   normalizeCompleted,
   resumeNote,
   seedFromCase,
+  tasksFor,
   visitsLog,
   withFinding,
   type OfficeCase,
 } from "../src/lib/case/model";
+import { QUESTION_SETS, type TaskCheck } from "../src/lib/case/questions";
 import { LabShell, type GradeContext } from "../src/lib/shell/shell";
 
 function mulberry32(seed: number): () => number {
@@ -48,6 +51,7 @@ function skeleton(spec: OfficeCase, text: string): string {
 
 const sample: OfficeCase = {
   id: "abc12345",
+  questionSet: "missing-pages",
   scannerIp: "203.0.113.10",
   callerIp: "198.51.100.20",
   staffIps: ["192.0.2.11", "192.0.2.12", "192.0.2.13", "192.0.2.14"],
@@ -101,6 +105,20 @@ describe("office case", () => {
     expect(sites.size).toBeGreaterThan(1);
   });
 
+  it("asks different questions, and a new case does not repeat the set you just had", () => {
+    const lists = QUESTION_SETS.map((set) => set.tasks.map((task) => task.prompt));
+    for (const prompts of lists) expect(new Set(prompts).size).toBe(prompts.length);
+    expect(new Set(lists.map((prompts) => prompts.join("\n"))).size).toBe(QUESTION_SETS.length);
+
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const spec = generateCase(mulberry32(seed));
+      seen.add(spec.questionSet);
+      expect(generateCase(mulberry32(seed + 100), spec.questionSet).questionSet).not.toBe(spec.questionSet);
+    }
+    expect(seen.size).toBe(QUESTION_SETS.length);
+  });
+
   it("puts the missing pages on one address and the odd website on one caller", () => {
     const spec = generateCase(mulberry32(9));
     const missing = accessLog(spec)
@@ -134,58 +152,84 @@ describe("office case", () => {
     expect(session.run("find . -name allow.txt").completed).toEqual([]);
 
     const found = session.run("find . -name access.log");
-    expect(found.messages).toEqual(["marked — web log"]);
-    expect(found.completed).toEqual(["find-log"]);
+    expect(found.messages).toEqual(["marked — website log"]);
+    expect(found.completed).toEqual(["find-access"]);
 
-    const wrong = session.run("echo 192.0.2.11 > answers/scanner.txt");
-    expect(wrong.messages).toEqual(["scanner.txt is not the right IP"]);
-    expect(wrong.completed).toEqual(["find-log"]);
+    const wrong = session.run("echo 192.0.2.11 > answers/odd-ip.txt");
+    expect(wrong.messages).toEqual(["odd-ip.txt is not the right IP"]);
+    expect(wrong.completed).toEqual(["find-access"]);
 
-    const scanner = session.run(`echo ${sample.scannerIp} > answers/scanner.txt`);
+    const scanner = session.run(`echo ${sample.scannerIp} > answers/odd-ip.txt`);
     expect(scanner.messages).toEqual(["marked — odd IP"]);
-    expect(scanner.completed).toEqual(["find-log", "scanner"]);
+    expect(scanner.completed).toEqual(["find-access", "odd-ip"]);
 
-    const site = session.run(`echo ${sample.suspiciousSite} > answers/site.txt`);
-    expect(site.completed).toEqual(["find-log", "scanner", "site"]);
+    const page = session.run(`echo ${answerValue(sample, "first-page")} > answers/page.txt`);
+    expect(page.completed).toEqual(["find-access", "odd-ip", "first-page"]);
 
-    const caller = session.run(`echo ${sample.callerIp} > answers/caller.txt`);
-    expect(caller.messages).toEqual(["marked — caller IP"]);
-    expect(caller.completed).toEqual(["find-log", "scanner", "site", "caller"]);
+    const count = session.run(`echo ${answerValue(sample, "miss-count")} > answers/count.txt`);
+    expect(count.messages).toEqual(["marked — count"]);
+    expect(count.completed).toEqual(["find-access", "odd-ip", "first-page", "miss-count"]);
   });
 
   it("does not open a later step until the one above is marked", () => {
     const session = play(sample);
-    const early = session.run(`echo ${sample.suspiciousSite} > answers/site.txt`);
+    const early = session.run(`echo ${answerValue(sample, "first-page")} > answers/page.txt`);
     expect(early.completed).toEqual([]);
 
     session.run("find . -name access.log");
-    const both = session.run(`echo ${sample.scannerIp} > answers/scanner.txt`);
-    expect(both.messages).toEqual(["marked — odd IP", "marked — website"]);
-    expect(both.completed).toEqual(["find-log", "scanner", "site"]);
+    const both = session.run(`echo ${sample.scannerIp} > answers/odd-ip.txt`);
+    expect(both.messages).toEqual(["marked — odd IP", "marked — page name"]);
+    expect(both.completed).toEqual(["find-access", "odd-ip", "first-page"]);
+  });
+
+  it("solves every question set from the logs", () => {
+    for (const set of QUESTION_SETS) {
+      const spec: OfficeCase = { ...generateCase(mulberry32(7)), questionSet: set.id, completed: [], finding: "" };
+      const session = play(spec);
+      for (const task of tasksFor(spec)) {
+        const check: TaskCheck = task.check;
+        if (check.kind === "finding") break;
+        if (check.kind === "find") session.run(`find . -name ${check.name}`);
+        else if (check.kind === "exact") session.run(`echo ${answerValue(spec, check.key)} > ${check.file}`);
+        else session.run(`echo ${spec.sites[0]} > ${check.file}`);
+      }
+      expect(session.completed()).toEqual(tasksFor(spec).filter((task) => task.id !== "finding").map((task) => task.id));
+    }
   });
 
   it("drops a later tick that skipped a step", () => {
-    expect(normalizeCompleted(["caller", "find-log"])).toEqual(["find-log"]);
-    expect(normalizeCompleted(["finding"])).toEqual([]);
+    expect(normalizeCompleted(["opener", "find-access"], "missing-pages")).toEqual(["find-access"]);
+    expect(normalizeCompleted(["finding"], "missing-pages")).toEqual([]);
+    expect(normalizeCompleted(["first-open", "find-visits"], "odd-website")).toEqual(["find-visits"]);
   });
 
   it("keeps the evidence locked until that step is marked, then checks the finding", () => {
     expect(evidenceTimeline(sample, []).map((section) => section.title)).toEqual([]);
-    expect(evidenceTimeline(sample, ["find-log", "scanner"]).some((section) => section.lines.some((line) => line.includes("not found")))).toBe(true);
-    expect(evidenceTimeline(sample, ["find-log", "scanner"]).some((section) => section.lines.some((line) => line.includes(sample.suspiciousSite)))).toBe(false);
+    expect(evidenceTimeline(sample, ["find-access", "odd-ip"]).some((section) => section.lines.some((line) => line.includes("not found")))).toBe(true);
+    expect(evidenceTimeline(sample, ["find-access", "odd-ip"]).some((section) => section.lines.some((line) => line.includes(sample.suspiciousSite)))).toBe(false);
+    const siteOnly = evidenceTimeline({ ...sample, questionSet: "odd-website" }, ["odd-site"]);
+    expect(siteOnly.some((section) => section.lines.includes(sample.suspiciousSite))).toBe(true);
+    expect(siteOnly.some((section) => section.lines.some((line) => line.includes(sample.callerIp)))).toBe(false);
 
-    const done = { ...sample, completed: ["find-log", "scanner", "site", "caller"] as OfficeCase["completed"] };
-    const short = withFinding(done, `${sample.scannerIp} ${sample.suspiciousSite}`);
+    const shell = ["find-access", "odd-ip", "first-page", "miss-count"] as OfficeCase["completed"];
+    const done = { ...sample, completed: shell };
+    const short = withFinding(done, `${sample.scannerIp} tried pages`);
     expect(short.completed.includes("finding")).toBe(false);
     expect(findingGaps(done, short.finding).length).toBeGreaterThan(0);
 
-    const note = `${sample.scannerIp} tried pages that were not found. The same notes show ${sample.callerIp} opened ${sample.suspiciousSite}, which is not allowed. I would show these log lines to the office.`;
+    const note = `${sample.scannerIp} tried pages that were not found. I would show these log lines to the office and ask them to look at that address.`;
     expect(findingReady(done, note)).toBe(true);
-    expect(withFinding(done, note).completed).toEqual(["find-log", "scanner", "site", "caller", "finding"]);
+    expect(withFinding(done, note).completed).toEqual([...shell, "finding"]);
     expect(withFinding(sample, note).completed.includes("finding")).toBe(false);
     expect(resumeNote()).toContain("Practice log review");
 
+    const mail = { ...done, questionSet: "mail-day" as const, completed: ["find-mail", "mail-ip", "mail-count", "mail-site"] as OfficeCase["completed"] };
+    const mailNote = `${answerValue(mail, "mail-ip")} sent the first office mail. The mail log also names ${mail.sites[0]}. I would tell the office what the mail log showed.`;
+    expect(findingReady(mail, mailNote)).toBe(true);
+    expect(findingReady(mail, mailNote.replace(mail.sites[0], mail.suspiciousSite))).toBe(false);
+
     const older = { ...generateCase(mulberry32(4)), finding: undefined };
     expect(isOfficeCase(older)).toBe(true);
+    expect(isOfficeCase({ ...sample, questionSet: undefined })).toBe(false);
   });
 });

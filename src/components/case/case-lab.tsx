@@ -10,13 +10,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gradeCase } from "@/lib/case/grade";
 import {
   CASE_COMPANY,
-  CASE_TASKS,
   evidenceTimeline,
   findingGaps,
   generateCase,
+  randomUnit,
   resumeNote,
   seedFromCase,
+  tasksFor,
   withFinding,
+  type CaseTask,
   type CaseTaskId,
   type OfficeCase,
 } from "@/lib/case/model";
@@ -43,7 +45,7 @@ function CaseStart() {
         <h1 className="mt-3 max-w-2xl text-3xl font-medium tracking-tight text-paper">{CASE_COMPANY}</h1>
         <div className="mt-6 max-w-2xl space-y-4 text-sm leading-7 text-muted">
           <p>
-            Make a practice log for this office. You read what each IP address did. The questions stay the same. A new case only changes the IP addresses, which ones look wrong, and the website names.
+            Make a practice log for this office. You read what each IP address did. A new case asks different questions. It also changes the IP addresses, which ones look wrong, and the website names.
           </p>
           <p>
             Use grep and find to read the logs. Open a hint if you get stuck. There is more than one hint on each step. A step ticks when you are right, and the next step stays locked until then.
@@ -53,7 +55,7 @@ function CaseStart() {
           </p>
           <p>The IP addresses and websites are fake. They are only for this lab. Notes stay on this device with the case.</p>
         </div>
-        <Button className="mt-8" onClick={() => saveCase(generateCase())}>
+        <Button className="mt-8" onClick={() => saveCase(generateCase(randomUnit, loadCase()?.questionSet))}>
           Generate case
         </Button>
       </main>
@@ -69,7 +71,7 @@ function CaseSession() {
   const [side, setSide] = useState<Side>(() => {
     const saved = loadCase();
     if (!saved) return "notes";
-    const open = CASE_TASKS.find((task) => !saved.completed.includes(task.id));
+    const open = tasksFor(saved).find((task) => !saved.completed.includes(task.id));
     return !open || open.id === "finding" ? "report" : "notes";
   });
   const [confirm, setConfirm] = useState(false);
@@ -79,9 +81,10 @@ function CaseSession() {
 
   if (!spec) return null;
 
+  const tasks = tasksFor(spec);
   const completed = new Set(spec.completed);
-  const openIndex = CASE_TASKS.findIndex((task) => !completed.has(task.id));
-  const current = openIndex === -1 ? null : CASE_TASKS[openIndex];
+  const openIndex = tasks.findIndex((task) => !completed.has(task.id));
+  const current = openIndex === -1 ? null : tasks[openIndex];
   const seed = seedFromCase(spec);
 
   function onCommand(event: GradeContext) {
@@ -97,10 +100,15 @@ function CaseSession() {
     if (!currentCase.completed.includes("finding") && next.completed.includes("finding")) {
       shellRef.current?.aside("marked — finding");
     }
-    if (!currentCase.completed.includes("scanner") && next.completed.includes("scanner")) {
-      setSide("report");
-    }
-    if (!currentCase.completed.includes("caller") && next.completed.includes("caller")) {
+    const tasksNow = tasksFor(currentCase);
+    const added = next.completed.filter((id) => !currentCase.completed.includes(id));
+    const answered = added.some((id) => {
+      const task = tasksNow.find((item) => item.id === id);
+      return task !== undefined && task.check.kind !== "find" && task.check.kind !== "finding";
+    });
+    const opened = tasksNow.find((task) => !next.completed.includes(task.id));
+    if (answered) setSide("report");
+    if (opened?.id === "finding" && added.length > 0) {
       setSide("report");
       setPanel("report");
     }
@@ -131,7 +139,7 @@ function CaseSession() {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2 sm:gap-3 sm:px-5 sm:py-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">
-            Case {spec.id} · {completed.size}/{CASE_TASKS.length}
+            Case {spec.id} · {completed.size}/{tasks.length}
           </p>
           <h1 className="truncate text-xl tracking-tight text-paper sm:text-2xl">{CASE_COMPANY}</h1>
         </div>
@@ -142,7 +150,7 @@ function CaseSession() {
       <p className="border-b border-line px-3 py-2 text-sm leading-5 text-muted sm:px-5 sm:py-3 sm:leading-6">
         {current
           ? current.id === "finding"
-            ? "Last step. Write the finding in Report. It ticks when the odd IP, the website, and what they did are in the note."
+            ? "Last step. Write the finding in Report. It ticks when the note includes the facts from this case."
             : "Each log line is a time, an IP address, and what that person did. The next step stays locked until this one is right."
           : "Case closed. Copy the resume note in Report, or make a new case."}
       </p>
@@ -165,7 +173,7 @@ function CaseSession() {
 
       <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)_320px]">
         <div className={panel === "tasks" ? "min-h-0" : "hidden lg:block lg:min-h-0"}>
-          <TaskList completed={completed} openIndex={openIndex} />
+          <TaskList tasks={tasks} completed={completed} openIndex={openIndex} />
         </div>
         <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col overflow-hidden lg:flex`}>
           <div className="min-h-0 flex-1 overflow-hidden">
@@ -201,7 +209,7 @@ function CaseSession() {
         open={confirm}
         onOpenChange={setConfirm}
         title="Generate a new case?"
-        description="This replaces the IP addresses, the websites, your ticks, your notes, and your finding. The questions stay the same."
+        description="This replaces the questions, the IP addresses, the websites, your ticks, your notes, and your finding."
       >
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setConfirm(false)}>
@@ -209,7 +217,7 @@ function CaseSession() {
           </Button>
           <Button
             onClick={() => {
-              saveCase(generateCase());
+              saveCase(generateCase(randomUnit, loadCase()?.questionSet));
             }}
           >
             Generate
@@ -220,17 +228,17 @@ function CaseSession() {
   );
 }
 
-function TaskList({ completed, openIndex }: { completed: Set<CaseTaskId>; openIndex: number }) {
+function TaskList({ tasks, completed, openIndex }: { tasks: CaseTask[]; completed: Set<CaseTaskId>; openIndex: number }) {
   return (
     <aside className="flex h-full min-h-0 flex-1 flex-col border-line bg-ink lg:border-r">
       <div className="border-b border-line px-4 py-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Tasks</p>
         <p className="mt-1 text-sm text-muted" aria-live="polite">
-          {completed.size} of {CASE_TASKS.length} marked
+          {completed.size} of {tasks.length} marked
         </p>
       </div>
       <ol className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
-        {CASE_TASKS.map((task, index) => {
+        {tasks.map((task, index) => {
           const done = completed.has(task.id);
           const locked = openIndex !== -1 && index > openIndex;
           const current = index === openIndex;
@@ -294,7 +302,9 @@ function Report({
   onCopy: () => void;
 }) {
   const sections = evidenceTimeline(spec, [...completed]);
-  const shellDone = CASE_TASKS.filter((task) => task.id !== "finding").every((task) => completed.has(task.id));
+  const tasks = tasksFor(spec);
+  const shellDone = tasks.filter((task) => task.id !== "finding").every((task) => completed.has(task.id));
+  const findingPrompt = tasks.find((task) => task.id === "finding")?.prompt;
   const gaps = shellDone ? findingGaps(spec, finding) : [];
   const done = completed.has("finding");
 
@@ -336,7 +346,7 @@ function Report({
                 value={finding}
                 maxLength={2000}
                 onChange={(event) => onChange(event.target.value)}
-                placeholder="Say the odd IP, what it did, the website that is not allowed, and what you would tell the office."
+                placeholder={findingPrompt ?? "Write what you would tell the office."}
                 className="mt-2 h-36 w-full resize-none rounded-xl border border-line bg-transparent px-3 py-2 text-base leading-6 text-paper outline-none placeholder:text-faint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber sm:text-sm"
               />
               {done ? (

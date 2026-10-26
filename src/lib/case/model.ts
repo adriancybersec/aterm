@@ -1,5 +1,18 @@
 import type { LabSeed } from "../shell/shell";
 import type { SeedFile } from "../shell/vfs";
+import {
+  isQuestionSetId,
+  questionSet,
+  QUESTION_SETS,
+  tasksForSet,
+  type AnswerKey,
+  type CaseTask,
+  type CaseTaskId,
+  type QuestionSetId,
+} from "./questions";
+
+export type { CaseTask, CaseTaskId, QuestionSetId };
+export { tasksForSet };
 
 export const CASE_COMPANY = "Brightwater Office";
 export const COMPANY_SITE = "brightwater.example";
@@ -28,75 +41,13 @@ const ODD_SITES = [
   "edge-collector.example",
 ];
 
-export type CaseTaskId = "find-log" | "scanner" | "site" | "caller" | "finding";
-
-export type CaseTask = {
-  id: CaseTaskId;
-  prompt: string;
-  hints: string[];
-  marked: string;
-};
-
-export const CASE_TASKS: CaseTask[] = [
-  {
-    id: "find-log",
-    prompt: "Find the log of what people did on the office website. Use find so the file path shows on screen.",
-    hints: [
-      "The file is named access.log. It sits in a folder under here.",
-      "find looks through folders. A dot means start in this folder.",
-      "Type find . -name access.log and press Enter.",
-    ],
-    marked: "web log",
-  },
-  {
-    id: "scanner",
-    prompt: "One IP address tried pages that are not real. The others did not. Write only that IP in answers/scanner.txt.",
-    hints: [
-      "Open web/access.log. Each line is a time, an IP address, and what that person did.",
-      "Normal lines say opened, signed in, or downloaded. The odd lines say not found.",
-      "Type grep \"not found\" web/access.log. One IP is on every one of those lines.",
-      "Save only that IP. Type echo THE-IP > answers/scanner.txt",
-    ],
-    marked: "odd IP",
-  },
-  {
-    id: "site",
-    prompt: "People also opened other websites. One of them is not on the allow.txt list. Write only that website in answers/site.txt.",
-    hints: [
-      "allow.txt is the list of websites staff may open.",
-      "visits/sites.log is another log. Each line is a time, an IP address, and the website they opened.",
-      "Type cat allow.txt and then cat visits/sites.log. Look for the website that is missing from the list.",
-      "You can check a name with grep. Type grep website-name allow.txt. No match means it is not allowed.",
-      "Save only the website. Type echo the-website > answers/site.txt",
-    ],
-    marked: "website",
-  },
-  {
-    id: "caller",
-    prompt: "Which IP address opened that website? Write only that IP in answers/caller.txt.",
-    hints: [
-      "Use the website you just wrote down.",
-      "Type grep the-website visits/sites.log",
-      "On each matching line the IP address is the number after the time.",
-      "Save only that IP. Type echo THE-IP > answers/caller.txt",
-    ],
-    marked: "caller IP",
-  },
-  {
-    id: "finding",
-    prompt: "Write a finding in Report. Name the odd IP, what it did, the website that is not allowed, and what you would tell the office.",
-    hints: [
-      "Open Report. On a phone it is the Report tab. On a wide screen it is the button next to Notes.",
-      "Put in the odd IP and the website you already saved.",
-      "Say what the logs showed. Use plain words such as not found or not allowed.",
-      "Two sentences is enough. It ticks when those facts are in the note.",
-    ],
-    marked: "finding",
-  },
-];
+export function tasksFor(spec: Pick<OfficeCase, "questionSet">): CaseTask[] {
+  return tasksForSet(spec.questionSet);
+}
 
 export type OfficeCase = {
   id: string;
+  questionSet: QuestionSetId;
   scannerIp: string;
   callerIp: string;
   staffIps: string[];
@@ -144,12 +95,15 @@ function caseId(rng: () => number): string {
   return id;
 }
 
-export function generateCase(rng: () => number = randomUnit): OfficeCase {
+export function generateCase(rng: () => number = randomUnit, avoid?: QuestionSetId): OfficeCase {
+  const choices = QUESTION_SETS.map((set) => set.id).filter((id) => id !== avoid);
+  const questionSet = choices[Math.floor(rng() * choices.length)] ?? QUESTION_SETS[0].id;
   const ips = pickIps(8, rng);
   const scannerIp = ips[0];
   const callerIp = rng() < 0.5 ? scannerIp : ips[1];
   return {
     id: caseId(rng),
+    questionSet,
     scannerIp,
     callerIp,
     staffIps: ips.slice(2, 6),
@@ -286,8 +240,7 @@ export function briefText(): string {
     "mail/sent.log is mail people sent.",
     "allow.txt lists the websites staff may open.",
     "",
-    "One IP tried pages that are not real.",
-    "One website in the visits log is not on allow.txt.",
+    "The questions are on the left. A new case asks different ones.",
     "Write one answer per file in the answers folder.",
     "Use find and grep. Do not change the logs.",
     "",
@@ -313,24 +266,35 @@ export function seedFromCase(spec: OfficeCase): LabSeed {
   return { cwd: "/home/student/case", files };
 }
 
+export function answerValue(spec: OfficeCase, key: AnswerKey): string {
+  const access = accessLog(spec).trim().split("\n");
+  const visits = visitsLog(spec).trim().split("\n");
+  const mail = mailLog(spec).trim().split("\n");
+  const ipOn = (line: string) => line.split(/\s+/)[1] ?? "";
+  if (key === "odd-ip") return spec.scannerIp;
+  if (key === "odd-site") return spec.suspiciousSite;
+  if (key === "opener") return spec.callerIp;
+  if (key === "first-page") {
+    const line = access.find((item) => item.includes("not found")) ?? "";
+    return line.split(/\s+/).find((part) => part.startsWith("/")) ?? "";
+  }
+  if (key === "miss-count") return String(access.filter((line) => line.includes("not found")).length);
+  if (key === "first-open") return (visits.find((line) => line.endsWith(`opened ${spec.suspiciousSite}`)) ?? "").split(/\s+/)[0] ?? "";
+  if (key === "mail-ip") return ipOn(mail.find((line) => line.includes(`team@${COMPANY_SITE}`)) ?? "");
+  if (key === "mail-count") return String(mail.length);
+  if (key === "downloader") return ipOn(access.find((line) => line.includes("downloaded")) ?? "");
+  return ipOn(access.find((line) => line.includes("signed in")) ?? "");
+}
+
 export function evidenceTimeline(spec: OfficeCase, completed: readonly string[]): { title: string; lines: string[] }[] {
   const sections: { title: string; lines: string[] }[] = [];
-  if (completed.includes("scanner")) {
-    sections.push({
-      title: "Odd IP",
-      lines: accessLog(spec)
-        .trim()
-        .split("\n")
-        .filter((line) => line.includes("not found")),
-    });
+  const access = accessLog(spec).trim().split("\n");
+  const has = (id: string) => completed.includes(id);
+  if (has("odd-ip") || has("first-page") || has("miss-count")) {
+    sections.push({ title: "Pages that were not found", lines: access.filter((line) => line.includes("not found")) });
   }
-  if (completed.includes("site")) {
-    sections.push({
-      title: "Not on the allow list",
-      lines: [spec.suspiciousSite],
-    });
-  }
-  if (completed.includes("caller")) {
+  if (has("odd-site")) sections.push({ title: "Not on the allow list", lines: [spec.suspiciousSite] });
+  if (has("opener") || has("first-open")) {
     sections.push({
       title: "Who opened it",
       lines: visitsLog(spec)
@@ -339,18 +303,45 @@ export function evidenceTimeline(spec: OfficeCase, completed: readonly string[])
         .filter((line) => line.includes(spec.suspiciousSite)),
     });
   }
+  if (has("mail-ip") || has("mail-count") || has("mail-site")) {
+    sections.push({ title: "Mail", lines: mailLog(spec).trim().split("\n") });
+  }
+  if (has("downloader")) sections.push({ title: "Downloaded", lines: access.filter((line) => line.includes("downloaded")) });
+  if (has("sign-in")) sections.push({ title: "Signed in", lines: access.filter((line) => line.includes("signed in")) });
   return sections;
 }
 
 export function findingGaps(spec: OfficeCase, text: string): string[] {
   const body = text.trim();
   const gaps: string[] = [];
-  if (!body.includes(spec.scannerIp)) gaps.push("Add the odd IP address.");
-  if (spec.callerIp !== spec.scannerIp && !body.includes(spec.callerIp)) gaps.push("Add the IP that opened the website.");
-  if (!body.includes(spec.suspiciousSite)) gaps.push("Add the website that is not allowed.");
-  if (!/not found|not real|not allowed|allow list|allow\.txt/i.test(body)) {
-    gaps.push("Say what they did, in plain words.");
+  const set = questionSet(spec.questionSet);
+  for (const need of set.findingNeeds) {
+    const value =
+      need === "odd-ip"
+        ? spec.scannerIp
+        : need === "opener"
+          ? spec.callerIp
+          : need === "odd-site"
+            ? spec.suspiciousSite
+            : need === "mail-ip"
+              ? answerValue(spec, "mail-ip")
+              : answerValue(spec, "downloader");
+    const label =
+      need === "odd-site"
+        ? "Add the website that is not allowed."
+        : need === "mail-ip"
+          ? "Add the IP that sent the first office mail."
+          : need === "downloader"
+            ? "Add the IP that downloaded the price list."
+            : need === "opener"
+              ? "Add the IP that opened the website."
+              : "Add the odd IP address.";
+    if (!body.includes(value)) gaps.push(label);
   }
+  if (spec.questionSet === "mail-day" && !spec.sites.some((site) => body.includes(site))) {
+    gaps.push("Add one other website from the mail log.");
+  }
+  if (!set.findingPattern.test(body)) gaps.push(set.findingHint);
   if (body.length < 80) gaps.push("Write at least two sentences.");
   return gaps;
 }
@@ -361,20 +352,23 @@ export function findingReady(spec: OfficeCase, text: string): boolean {
 
 export function withFinding(spec: OfficeCase, text: string): OfficeCase {
   const finding = text.slice(0, 2000);
-  const shellDone = CASE_TASKS.filter((task) => task.id !== "finding").every((task) => spec.completed.includes(task.id));
+  const shellDone = tasksFor(spec)
+    .filter((task) => task.id !== "finding")
+    .every((task) => spec.completed.includes(task.id));
   const completed: CaseTaskId[] = spec.completed.filter((id) => id !== "finding");
   if (shellDone && findingReady(spec, finding)) completed.push("finding");
   return { ...spec, finding, completed };
 }
 
 export function resumeNote(): string {
-  return "Practice log review (Aterx, Brightwater Office). Read website, visit, and mail logs. Found one IP trying pages that were not found, and one website that was not on the allow list. Wrote a short finding and kept the log lines as evidence.";
+  return "Practice log review (Aterx, Brightwater Office). Read logs of what people did, answered a fresh set of questions, and wrote a short finding with the log lines as evidence.";
 }
 
 export function isOfficeCase(value: unknown): value is OfficeCase {
   if (!value || typeof value !== "object") return false;
   const spec = value as Partial<OfficeCase>;
   if (typeof spec.id !== "string" || !/^[0-9a-f]{8}$/.test(spec.id)) return false;
+  if (!isQuestionSetId(spec.questionSet)) return false;
   if (typeof spec.notes !== "string" || spec.notes.length > 4000) return false;
   if (spec.finding !== undefined && (typeof spec.finding !== "string" || spec.finding.length > 2000)) return false;
   const ips = [spec.scannerIp, spec.callerIp, ...(spec.staffIps ?? []), ...(spec.noiseIps ?? [])];
@@ -392,10 +386,10 @@ export function isOfficeCase(value: unknown): value is OfficeCase {
   return true;
 }
 
-export function normalizeCompleted(ids: unknown): CaseTaskId[] {
+export function normalizeCompleted(ids: unknown, setId: QuestionSetId): CaseTaskId[] {
   const have = new Set(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []);
   const completed: CaseTaskId[] = [];
-  for (const task of CASE_TASKS) {
+  for (const task of tasksForSet(setId)) {
     if (!have.has(task.id)) break;
     completed.push(task.id);
   }

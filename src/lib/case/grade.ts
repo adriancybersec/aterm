@@ -1,12 +1,9 @@
 import type { GradeContext } from "../lessons/grader";
 import type { SnapshotFile } from "../shell/vfs";
-import { CASE_TASKS, type CaseTaskId, type OfficeCase } from "./model";
+import { answerValue, tasksFor, type CaseTaskId, type OfficeCase } from "./model";
+import type { TaskCheck } from "./questions";
 
-const ANSWERS: Record<Exclude<CaseTaskId, "find-log" | "finding">, string> = {
-  scanner: "/home/student/case/answers/scanner.txt",
-  site: "/home/student/case/answers/site.txt",
-  caller: "/home/student/case/answers/caller.txt",
-};
+const ROOT = "/home/student/case/";
 
 export type CaseGrade = {
   completed: CaseTaskId[];
@@ -29,44 +26,45 @@ function singleLine(files: SnapshotFile[], path: string): string | null {
   return lines[0].trim();
 }
 
-function expected(spec: OfficeCase, id: Exclude<CaseTaskId, "find-log" | "finding">): string {
-  if (id === "scanner") return spec.scannerIp;
-  if (id === "site") return spec.suspiciousSite;
-  return spec.callerIp;
+function answerPath(file: string): string {
+  return `${ROOT}${file}`;
 }
 
-function passes(id: CaseTaskId, spec: OfficeCase, event: GradeContext): boolean {
-  if (id === "find-log") {
-    return usesCommand(event.line, "find") && `${event.stdout}${event.stderr}`.includes("access.log");
+function matches(check: TaskCheck, spec: OfficeCase, event: GradeContext): boolean {
+  if (check.kind === "find") {
+    return usesCommand(event.line, "find") && `${event.stdout}${event.stderr}`.includes(check.name);
   }
-  if (id === "finding") return false;
-  return singleLine(event.files, ANSWERS[id]) === expected(spec, id);
+  if (check.kind === "finding") return false;
+  const value = singleLine(event.files, answerPath(check.file));
+  if (value === null) return false;
+  if (check.kind === "exact") return value === answerValue(spec, check.key);
+  return spec.sites.includes(value);
 }
 
-function mismatch(id: CaseTaskId, spec: OfficeCase, event: GradeContext): string | null {
-  if (id === "find-log" || id === "finding") return null;
-  const filename = ANSWERS[id].split("/").pop() ?? "";
+function mismatch(check: TaskCheck, spec: OfficeCase, event: GradeContext): string | null {
+  if (check.kind === "find" || check.kind === "finding") return null;
+  const filename = check.file.split("/").pop() ?? "";
   if (!event.line.includes(filename)) return null;
-  const file = fileAt(event.files, ANSWERS[id]);
-  if (!file) return null;
-  const value = singleLine(event.files, ANSWERS[id]);
+  if (!fileAt(event.files, answerPath(check.file))) return null;
+  const value = singleLine(event.files, answerPath(check.file));
   if (value === null) return `${filename} should be one line only`;
-  if (value === expected(spec, id)) return null;
-  return id === "site" ? "site.txt is not the right website" : `${filename} is not the right IP`;
+  const right = check.kind === "exact" ? value === answerValue(spec, check.key) : spec.sites.includes(value);
+  if (right) return null;
+  return check.wrong;
 }
 
 export function gradeCase(spec: OfficeCase, event: GradeContext): CaseGrade {
   const completed = [...spec.completed];
   const messages: string[] = [];
-  for (const task of CASE_TASKS) {
+  for (const task of tasksFor(spec)) {
     if (completed.includes(task.id)) continue;
-    if (task.id === "finding") break;
-    if (passes(task.id, spec, event)) {
+    if (task.check.kind === "finding") break;
+    if (matches(task.check, spec, event)) {
       completed.push(task.id);
       messages.push(`marked — ${task.marked}`);
       continue;
     }
-    const wrong = mismatch(task.id, spec, event);
+    const wrong = mismatch(task.check, spec, event);
     if (wrong) messages.push(wrong);
     break;
   }
