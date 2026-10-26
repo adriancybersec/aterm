@@ -49,9 +49,9 @@ function mismatch(id: CaseTaskId, spec: OfficeCase, event: GradeContext): string
   const file = fileAt(event.files, ANSWERS[id]);
   if (!file) return null;
   const value = singleLine(event.files, ANSWERS[id]);
-  if (value === null) return `${filename} should be a single line`;
+  if (value === null) return `${filename} should be one line only`;
   if (value === expected(spec, id)) return null;
-  return id === "site" ? "site.txt is not the website" : `${filename} is not the address`;
+  return id === "site" ? "site.txt is not the right website" : `${filename} is not the right IP`;
 }
 
 export function gradeCase(spec: OfficeCase, event: GradeContext): CaseGrade {

@@ -6,10 +6,11 @@ import {
   briefText,
   CASE_TASKS,
   COMPANY_SITE,
-  gatewayLog,
   generateCase,
+  mailLog,
   normalizeCompleted,
   seedFromCase,
+  visitsLog,
   type OfficeCase,
 } from "../src/lib/case/model";
 import { LabShell, type GradeContext } from "../src/lib/shell/shell";
@@ -83,7 +84,8 @@ describe("office case", () => {
     expect(allowList(first)).toContain(COMPANY_SITE);
     expect(allowList(first)).not.toContain(first.suspiciousSite);
     expect(skeleton(first, accessLog(first))).toEqual(skeleton(second, accessLog(second)));
-    expect(skeleton(first, gatewayLog(first))).toEqual(skeleton(second, gatewayLog(second)));
+    expect(skeleton(first, visitsLog(first))).toEqual(skeleton(second, visitsLog(second)));
+    expect(skeleton(first, mailLog(first))).toEqual(skeleton(second, mailLog(second)));
     expect(skeleton(first, allowList(first))).toEqual(skeleton(second, allowList(second)));
     expect(briefText()).toBe(briefText());
 
@@ -95,25 +97,34 @@ describe("office case", () => {
 
   it("puts the missing pages on one address and the odd website on one caller", () => {
     const spec = generateCase(mulberry32(9));
-    for (const line of accessLog(spec).trim().split("\n")) {
-      if (!line.includes(" 404 ")) continue;
-      expect(line.startsWith(`${spec.scannerIp} `)).toBe(true);
-    }
-    const oddLines = gatewayLog(spec)
+    const missing = accessLog(spec)
       .trim()
       .split("\n")
-      .filter((line) => line.endsWith(` ${spec.suspiciousSite}`));
-    expect(oddLines.length).toBeGreaterThan(1);
-    expect(oddLines.every((line) => line.split(" ")[1] === spec.callerIp)).toBe(true);
-    for (const staff of spec.staffIps) {
-      expect(oddLines.some((line) => line.split(" ")[1] === staff)).toBe(false);
+      .filter((line) => line.includes("not found"));
+    expect(missing.length).toBeGreaterThan(1);
+    for (const line of missing) expect(line.split(/\s+/)[1]).toBe(spec.scannerIp);
+    for (const line of accessLog(spec).trim().split("\n")) {
+      expect(line).toMatch(/opened|tried|signed in|downloaded/);
+      expect(line.split(/\s+/)[1]).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
     }
+    const oddLines = visitsLog(spec)
+      .trim()
+      .split("\n")
+      .filter((line) => line.endsWith(`opened ${spec.suspiciousSite}`));
+    expect(oddLines.length).toBeGreaterThan(1);
+    expect(oddLines.every((line) => line.split(/\s+/)[1] === spec.callerIp)).toBe(true);
+    for (const staff of spec.staffIps) {
+      expect(oddLines.some((line) => line.split(/\s+/)[1] === staff)).toBe(false);
+    }
+    expect(mailLog(spec)).toContain("sent mail");
+    expect(mailLog(spec)).not.toContain(spec.suspiciousSite);
+    expect(mailLog(spec)).not.toContain("not found");
   });
 
   it("marks the steps in order and says when an answer is wrong", () => {
     const session = play(sample);
     expect(session.run("ls").completed).toEqual([]);
-    expect(session.run("grep ' 404 ' web/access.log").messages).toEqual([]);
+    expect(session.run('grep "not found" web/access.log').messages).toEqual([]);
     expect(session.run("find . -name allow.txt").completed).toEqual([]);
 
     const found = session.run("find . -name access.log");
@@ -121,18 +132,18 @@ describe("office case", () => {
     expect(found.completed).toEqual(["find-log"]);
 
     const wrong = session.run("echo 192.0.2.11 > answers/scanner.txt");
-    expect(wrong.messages).toEqual(["scanner.txt is not the address"]);
+    expect(wrong.messages).toEqual(["scanner.txt is not the right IP"]);
     expect(wrong.completed).toEqual(["find-log"]);
 
     const scanner = session.run(`echo ${sample.scannerIp} > answers/scanner.txt`);
-    expect(scanner.messages).toEqual(["marked — odd address"]);
+    expect(scanner.messages).toEqual(["marked — odd IP"]);
     expect(scanner.completed).toEqual(["find-log", "scanner"]);
 
     const site = session.run(`echo ${sample.suspiciousSite} > answers/site.txt`);
     expect(site.completed).toEqual(["find-log", "scanner", "site"]);
 
     const caller = session.run(`echo ${sample.callerIp} > answers/caller.txt`);
-    expect(caller.messages).toEqual(["marked — calling address"]);
+    expect(caller.messages).toEqual(["marked — caller IP"]);
     expect(caller.completed).toEqual(CASE_TASKS.map((task) => task.id));
   });
 
@@ -143,7 +154,7 @@ describe("office case", () => {
 
     session.run("find . -name access.log");
     const both = session.run(`echo ${sample.scannerIp} > answers/scanner.txt`);
-    expect(both.messages).toEqual(["marked — odd address", "marked — website"]);
+    expect(both.messages).toEqual(["marked — odd IP", "marked — website"]);
     expect(both.completed).toEqual(["find-log", "scanner", "site"]);
   });
 

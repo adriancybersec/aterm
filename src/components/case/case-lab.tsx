@@ -31,12 +31,12 @@ function CaseStart() {
         <h1 className="mt-3 max-w-2xl text-3xl font-medium tracking-tight text-paper">{CASE_COMPANY}</h1>
         <div className="mt-6 max-w-2xl space-y-4 text-sm leading-7 text-muted">
           <p>
-            Generate a log for this office and find the suspicious activity. The questions stay the same. Each generate swaps the addresses, which of them are the odd ones, and the website names.
+            Make a practice log for this office. You read what each IP address did. The questions stay the same. A new case only changes the IP addresses, which ones look wrong, and the website names.
           </p>
           <p>
-            Search with grep and find. A step marks when the answer is right, and the next one stays closed until then. Notes stay on this device with the case.
+            Use grep and find to read the logs. Open a hint if you get stuck. There is more than one hint on each step. A step ticks when you are right, and the next step stays locked until then.
           </p>
-          <p>The addresses are documentation ranges, and the websites end in .example. Nothing here is a real network.</p>
+          <p>The IP addresses and websites are fake. They are only for this lab. Notes stay on this device with the case.</p>
         </div>
         <Button className="mt-8" onClick={() => saveCase(generateCase())}>
           Generate case
@@ -51,7 +51,6 @@ function CaseSession() {
   const spec = useCase();
   const shellRef = useRef<LabShell | null>(null);
   const [panel, setPanel] = useState<Panel>("terminal");
-  const [hintFor, setHintFor] = useState<CaseTaskId | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [notes, setNotes] = useState(() => loadCase()?.notes ?? "");
 
@@ -96,9 +95,9 @@ function CaseSession() {
       <p className="border-b border-line px-3 py-2 text-sm leading-5 text-muted sm:px-5 sm:py-3 sm:leading-6">
         {current
           ? openIndex < CASE_TASKS.length - 1
-            ? "Read this morning's export. The next question stays closed until this one is marked."
-            : "Last question. It marks when the address is right."
-          : "Case closed. Generate another for a new set of addresses and websites."}
+            ? "Each log line is a time, an IP address, and what that person did. The next step stays locked until this one is right."
+            : "Last step. It ticks when the IP is right."
+          : "Done. Make a new case for different IP addresses and websites."}
       </p>
 
       <div className="border-b border-line px-3 py-2 lg:hidden">
@@ -112,18 +111,13 @@ function CaseSession() {
         {current ? (
           <p className="mt-3 text-sm leading-6">Now: {current.prompt}</p>
         ) : (
-          <p className="mt-3 text-sm text-mint">All steps marked.</p>
+          <p className="mt-3 text-sm text-mint">All steps done.</p>
         )}
       </div>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)_280px]">
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[340px_minmax(0,1fr)_280px]">
         <div className={panel === "tasks" ? "min-h-0" : "hidden lg:block lg:min-h-0"}>
-          <TaskList
-            completed={completed}
-            openIndex={openIndex}
-            hintFor={hintFor}
-            onToggleHint={(id) => setHintFor((currentId) => (currentId === id ? null : id))}
-          />
+          <TaskList completed={completed} openIndex={openIndex} />
         </div>
         <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col overflow-hidden lg:flex`}>
           <div className="min-h-0 flex-1 overflow-hidden">
@@ -131,7 +125,7 @@ function CaseSession() {
           </div>
           <p className="border-t border-line px-3 py-2 font-mono text-[11px] tracking-wide text-faint">
             <span className="sm:hidden">Tap the screen to type · Enter runs the line</span>
-            <span className="hidden sm:inline">Enter runs · a tick is the only way on · leaving this page resets the live folder</span>
+            <span className="hidden sm:inline">Enter runs the line · open a hint if you get stuck · leaving this page resets the live folder</span>
           </p>
         </div>
         <div className={panel === "notes" ? "min-h-0" : "hidden lg:block lg:min-h-0"}>
@@ -143,7 +137,7 @@ function CaseSession() {
         open={confirm}
         onOpenChange={setConfirm}
         title="Generate a new case?"
-        description="This replaces the addresses, the websites, your ticks, and your notes. The questions stay the same."
+        description="This replaces the IP addresses, the websites, your ticks, and your notes. The questions stay the same."
       >
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setConfirm(false)}>
@@ -162,17 +156,7 @@ function CaseSession() {
   );
 }
 
-function TaskList({
-  completed,
-  openIndex,
-  hintFor,
-  onToggleHint,
-}: {
-  completed: Set<CaseTaskId>;
-  openIndex: number;
-  hintFor: CaseTaskId | null;
-  onToggleHint: (id: CaseTaskId) => void;
-}) {
+function TaskList({ completed, openIndex }: { completed: Set<CaseTaskId>; openIndex: number }) {
   return (
     <aside className="flex h-full min-h-0 flex-col border-line bg-ink lg:border-r">
       <div className="border-b border-line px-4 py-3">
@@ -203,28 +187,45 @@ function TaskList({
                 >
                   {done ? <Check className="h-3 w-3" aria-hidden /> : locked ? <Lock className="h-3 w-3" aria-hidden /> : index + 1}
                 </span>
-                <p className="text-sm leading-6">
-                  {locked ? "Closed until the step above is marked." : task.prompt}
-                </p>
+                <p className="text-sm leading-6">{locked ? "Locked. Finish the step above first." : task.prompt}</p>
               </div>
               {done ? <p className="mt-3 pl-7 font-mono text-[11px] uppercase tracking-[0.12em] text-mint">Marked</p> : null}
-              {current ? (
-                <div className="mt-3 pl-7">
-                  <button
-                    type="button"
-                    className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted hover:text-paper"
-                    onClick={() => onToggleHint(task.id)}
-                  >
-                    {hintFor === task.id ? "Hide hint" : "Hint"}
-                  </button>
-                  {hintFor === task.id ? <p className="mt-3 text-sm leading-6 text-muted">{task.hint}</p> : null}
-                </div>
-              ) : null}
+              {current ? <HintSteps key={task.id} hints={task.hints} /> : null}
             </li>
           );
         })}
       </ol>
     </aside>
+  );
+}
+
+function HintSteps({ hints }: { hints: string[] }) {
+  const [shown, setShown] = useState(0);
+  const left = hints.length - shown;
+
+  return (
+    <div className="mt-3 pl-7">
+      {shown > 0 ? (
+        <ol className="space-y-2">
+          {hints.slice(0, shown).map((hint, index) => (
+            <li key={hint} className="text-sm leading-6 text-muted">
+              <span className="font-mono text-[11px] text-amber">Hint {index + 1}. </span>
+              {hint}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      <button
+        type="button"
+        className={cn(
+          "font-mono text-[11px] uppercase tracking-[0.12em] text-muted hover:text-paper",
+          shown > 0 && "mt-3",
+        )}
+        onClick={() => setShown(shown >= hints.length ? 0 : shown + 1)}
+      >
+        {shown === 0 ? `Show a hint (${hints.length})` : shown >= hints.length ? "Hide hints" : `Another hint (${left} left)`}
+      </button>
+    </div>
   );
 }
 
@@ -243,7 +244,7 @@ function Notes({ notes, onChange }: { notes: string; onChange: (value: string) =
         value={notes}
         maxLength={4000}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Write what you notice. Which address looks wrong, and which website is not on the list."
+        placeholder="Write the IP addresses you see, and what each person did."
         className="min-h-0 w-full flex-1 resize-none bg-transparent px-4 py-3 text-base leading-6 text-paper outline-none placeholder:text-faint focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber sm:text-sm"
       />
     </aside>

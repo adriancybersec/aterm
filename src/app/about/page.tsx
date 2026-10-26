@@ -24,7 +24,7 @@ export default function AboutPage() {
             Five lessons are live. Free covers the first two. Pro opens the rest. Plus shows the worked command. Your plan and ticks stay on this device.
           </p>
           <p>
-            Case generates a Brightwater Office log. The addresses, which of them are the odd ones, and the website names change. The questions do not. Notes for that case stay on this device.
+            Case is a practice log for Brightwater Office. Each line is an IP address and what that person did. A new case changes the IP addresses, which ones look wrong, and the website names. The questions stay the same.
           </p>
         </div>
         <div className="mt-8 flex flex-wrap gap-6 text-sm">

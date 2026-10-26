@@ -4,7 +4,7 @@ import { CaseLab } from "@/components/case/case-lab";
 export const metadata: Metadata = {
   title: "Case",
   description:
-    "Generate a Brightwater Office log and find the odd address and the website that is not on the list. Addresses and websites change each time.",
+    "Read a practice log. Each line is an IP address and what that person did. Find the odd IP and the website that is not allowed.",
 };
 
 export default function CasePage() {
