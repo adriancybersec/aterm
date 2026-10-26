@@ -20,7 +20,7 @@ export function PathBoard() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Lesson path</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Lessons</p>
       <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-3xl font-medium tracking-tight text-paper">Five labs. Then you keep going.</h1>
@@ -69,7 +69,7 @@ export function PathBoard() {
 
       <h2 className="mt-12 font-serif text-2xl">Later modules</h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-        These are on the map so the path has a shape. They are not labs yet, and they will stay on the defensive side of the work: reading a system, not breaking into one.
+        These are on the map so you can see what comes after the five lessons. They are not labs yet, and they will stay on the defensive side of the work: reading a system, not breaking into one.
       </p>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {upcomingModules.map((module) => (

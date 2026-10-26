@@ -8,7 +8,7 @@ There is no host shell. Commands never leave the tab.
 
 ```
 content/lessons/          lesson JSON. Add a module by adding a file here.
-src/app/                  routes: landing, path, lesson player, sandbox, account, pricing
+src/app/                  routes: landing, lessons, about, lesson player, sandbox, account, pricing
 src/components/terminal/  xterm.js terminal
 src/components/lesson/    task list, cheat sheet, lesson player
 src/components/ui/        button, input, badge, dialog, tabs

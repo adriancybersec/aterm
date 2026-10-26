@@ -136,7 +136,7 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
           </Link>
         ) : (
           <Link href="/learn" className="text-muted hover:text-paper">
-            ← Path
+            ← Lessons
           </Link>
         )}
         {next ? (
@@ -194,7 +194,7 @@ function LockedLesson({ lesson, plan }: { lesson: Lesson; plan: PlanId }) {
           <Link href="/pricing">See plans</Link>
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/learn">Back to the path</Link>
+          <Link href="/learn">Back to lessons</Link>
         </Button>
       </div>
     </div>

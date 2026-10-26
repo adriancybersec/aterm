@@ -14,7 +14,7 @@ export default function PricingPage() {
         <p className="text-xs tracking-[0.22em] text-faint">PLANS</p>
         <h1 className="mt-3 max-w-2xl text-3xl font-medium tracking-tight text-paper">Three plans. One terminal.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          Free is the first two labs. Pro opens the whole path. Plus shows the worked command and the extra sandbox presets. Pick one on this device to try the gates. No card, no account server.
+          Free is the first two labs. Pro opens every lesson. Plus shows the worked command and the extra sandbox presets. Pick one on this device to try the gates. No card, no account server.
         </p>
         <div className="mt-8">
           <PricingGrid mode="link" />

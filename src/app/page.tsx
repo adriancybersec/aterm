@@ -20,7 +20,7 @@ export default function HomePage() {
                 [ start lesson 1 ]
               </Link>
               <Link href="/learn" className="text-muted hover:text-paper">
-                [ path ]
+                [ lessons ]
               </Link>
             </div>
           </div>
@@ -28,7 +28,7 @@ export default function HomePage() {
         </section>
 
         <section className="border-t border-line py-10">
-          <p className="text-xs tracking-[0.22em] text-faint">PATH</p>
+          <p className="text-xs tracking-[0.22em] text-faint">LESSONS</p>
           <ol className="mt-4 divide-y divide-line border-y border-line">
             {lessons.map((lesson) => (
               <li key={lesson.slug}>

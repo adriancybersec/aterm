@@ -5,7 +5,8 @@ import { useState } from "react";
 import { Logo } from "@/components/site/logo";
 
 const links = [
-  { href: "/learn", label: "path" },
+  { href: "/learn", label: "lessons" },
+  { href: "/about", label: "about" },
   { href: "/pricing", label: "plans" },
   { href: "/sandbox", label: "sandbox" },
   { href: "/account", label: "account" },
@@ -16,7 +17,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-black">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-5">
         <Link href="/" onClick={() => setOpen(false)} aria-label="Aterx home">
           <Logo />
         </Link>

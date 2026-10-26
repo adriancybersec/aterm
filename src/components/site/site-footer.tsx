@@ -11,7 +11,10 @@ export function SiteFooter() {
         </div>
         <div className="flex gap-4">
           <Link href="/learn" className="hover:text-amber">
-            path
+            lessons
+          </Link>
+          <Link href="/about" className="hover:text-amber">
+            about
           </Link>
           <Link href="/pricing" className="hover:text-amber">
             plans
