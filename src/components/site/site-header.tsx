@@ -6,6 +6,7 @@ import { Logo } from "@/components/site/logo";
 
 const links = [
   { href: "/learn", label: "lessons" },
+  { href: "/case", label: "case" },
   { href: "/about", label: "about" },
   { href: "/pricing", label: "plans" },
   { href: "/sandbox", label: "sandbox" },
@@ -21,7 +22,7 @@ export function SiteHeader() {
         <Link href="/" onClick={() => setOpen(false)} aria-label="Aterx home">
           <Logo />
         </Link>
-        <nav className="hidden items-center gap-6 text-sm text-faint md:flex">
+        <nav className="hidden items-center gap-4 text-sm text-faint md:flex xl:gap-6">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-amber">
               {link.label}

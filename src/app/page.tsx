@@ -15,12 +15,15 @@ export default function HomePage() {
             <p className="mt-4 max-w-md text-sm leading-7 text-muted">
               Short labs for first and second year cyber students. A folder, a few tasks, and a terminal that marks the work.
             </p>
-            <div className="mt-8 flex gap-6 text-sm">
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm">
               <Link href="/learn/navigate" className="text-amber hover:text-amber-2">
                 [ start lesson 1 ]
               </Link>
               <Link href="/learn" className="text-muted hover:text-paper">
                 [ lessons ]
+              </Link>
+              <Link href="/case" className="text-muted hover:text-paper">
+                [ case ]
               </Link>
             </div>
           </div>

@@ -9,9 +9,12 @@ export function SiteFooter() {
           <Logo />
           <p>Commands stay in the browser.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
           <Link href="/learn" className="hover:text-amber">
             lessons
+          </Link>
+          <Link href="/case" className="hover:text-amber">
+            case
           </Link>
           <Link href="/about" className="hover:text-amber">
             about

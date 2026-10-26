@@ -8,7 +8,8 @@ There is no host shell. Commands never leave the tab.
 
 ```
 content/lessons/          lesson JSON. Add a module by adding a file here.
-src/app/                  routes: landing, lessons, about, lesson player, sandbox, account, pricing
+src/app/                  routes: landing, lessons, case, about, lesson player, sandbox, account, pricing
+src/lib/case/             generated Brightwater Office log case
 src/components/terminal/  xterm.js terminal
 src/components/lesson/    task list, cheat sheet, lesson player
 src/components/ui/        button, input, badge, dialog, tabs
@@ -137,6 +138,14 @@ The base image already has `/home/student`, `/tmp`, `/etc/passwd`, `/etc/group`,
 4. Run `npm test`. The suite runs every task's `solution` in order and expects each task to mark.
 
 Set `minPlan` to `pro` or `plus` if the lesson should stay behind those plans. Free currently includes lessons whose `minPlan` is `free`.
+
+## Case
+
+`/case` builds a fictional Brightwater Office log in the browser. The questions are fixed. Generate swaps only the documentation-range addresses, which of those addresses are the odd ones, and the `.example` website names.
+
+Four steps, in order: find the web log, write the address that requested missing pages, write the website that is not on `allow.txt`, then write the address that called it. A later step stays closed until the one above is marked. Notes are stored with the case in `localStorage` under `aterx.case.v1`. Leaving the page resets the live folder and keeps the ticks, the same way a lesson does.
+
+The case is open on every plan. It is still the in-browser shell: grep and find read the generated files, and nothing is sent to a server.
 
 ## Deploy
 

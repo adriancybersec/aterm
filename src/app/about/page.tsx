@@ -23,6 +23,9 @@ export default function AboutPage() {
           <p>
             Five lessons are live. Free covers the first two. Pro opens the rest. Plus shows the worked command. Your plan and ticks stay on this device.
           </p>
+          <p>
+            Case generates a Brightwater Office log. The addresses, which of them are the odd ones, and the website names change. The questions do not. Notes for that case stay on this device.
+          </p>
         </div>
         <div className="mt-8 flex flex-wrap gap-6 text-sm">
           <Link href="/learn" className="text-amber hover:text-amber-2">
