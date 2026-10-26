@@ -1,24 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, IBM_Plex_Mono, Outfit, Share_Tech_Mono } from "next/font/google";
+import { Share_Tech_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site/site-header";
 import "./globals.css";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-});
-
-const plex = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex",
-});
 
 const matrix = Share_Tech_Mono({
   subsets: ["latin"],
@@ -37,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-AU" className={`${outfit.variable} ${fraunces.variable} ${plex.variable} ${matrix.variable} h-full antialiased`}>
+    <html lang="en-AU" className={`${matrix.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <a
           href="#content"

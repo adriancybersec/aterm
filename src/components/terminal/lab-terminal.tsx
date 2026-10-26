@@ -55,6 +55,7 @@ export function LabTerminal({
   shellRef?: { current: LabShell | null };
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const termRef = useRef<{ focus: () => void } | null>(null);
   const onCommandRef = useRef(onCommand);
   const fitRef = useRef<{ fit: () => void } | null>(null);
   const seedRef = useRef(seed);
@@ -78,7 +79,10 @@ export function LabTerminal({
       ]);
       await import("@xterm/xterm/css/xterm.css");
       if (cancelled || !hostRef.current) return;
-      await document.fonts.ready;
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => window.setTimeout(resolve, 1200)),
+      ]);
       if (cancelled || !hostRef.current) return;
 
       const term = new Terminal({
@@ -92,6 +96,7 @@ export function LabTerminal({
       const fit = new FitAddon();
       fitRef.current = fit;
       term.loadAddon(fit);
+      termRef.current = term;
       term.open(host);
       fit.fit();
 
@@ -118,6 +123,7 @@ export function LabTerminal({
         term.dispose();
         if (shellRef) shellRef.current = null;
         fitRef.current = null;
+        termRef.current = null;
       };
     })();
 
@@ -139,6 +145,7 @@ export function LabTerminal({
       className="lab-terminal h-full min-h-0"
       role="region"
       aria-label="Lab terminal"
+      onPointerDown={() => termRef.current?.focus()}
     />
   );
 }

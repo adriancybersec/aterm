@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // The dev server listens on every interface. The preview is opened at
-  // 127.0.0.1, which Next otherwise treats as a cross-origin dev request and
-  // blocks. That block stops the dev channel and the page never hydrates.
-  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // Dev resources are blocked unless the browser host is listed. The lab
+  // preview is opened on 127.0.0.1 and on the Cursor port proxy.
+  allowedDevOrigins: ["127.0.0.1", "localhost", "**.agent.cvm.dev"],
   turbopack: {
     rules: {
       "*.css": {

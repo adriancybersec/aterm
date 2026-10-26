@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
-  --font-mono: var(--font-plex), ui-monospace, SFMono-Regular, Menlo, monospace;
-  --color-ink: #100e0c;
-  --color-ink-2: #1a1714;
-  --color-ink-3: #26221c;
-  --color-line: #3a342c;
-  --color-paper: #f3eee6;
-  --color-muted: #b7ab9a;
-  --color-faint: #8c8276;
-  --color-amber: #f0a202;
-  --color-amber-2: #ffd37a;
-  --color-mint: #c6e09a;
-  --color-danger: #ff8d7a;
+  --font-sans: var(--font-matrix), ui-monospace, monospace;
+  --font-serif: var(--font-matrix), ui-monospace, monospace;
+  --font-mono: var(--font-matrix), ui-monospace, monospace;
+  --color-ink: #000000;
+  --color-ink-2: #031208;
+  --color-ink-3: #062614;
+  --color-line: #0e3d20;
+  --color-paper: #d7ffe2;
+  --color-muted: #3ecf6e;
+  --color-faint: #1b7a3a;
+  --color-amber: #00ff41;
+  --color-amber-2: #8dffb0;
+  --color-mint: #39ff6a;
+  --color-danger: #ff5d5d;
 }
 
 html {
@@ -22,22 +22,28 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(900px 420px at 100% -10%, rgba(240, 162, 2, 0.14), transparent 55%),
-    radial-gradient(700px 380px at -10% 8%, rgba(198, 224, 154, 0.07), transparent 50%),
-    var(--color-ink);
+  background: #000;
   color: var(--color-paper);
   font-family: var(--font-sans);
 }
 
 ::selection {
-  background: #f0a202;
-  color: #1a1203;
+  background: #00ff41;
+  color: #001400;
 }
 
 :focus-visible {
-  outline: 2px solid #f0a202;
+  outline: 2px solid #00ff41;
   outline-offset: 2px;
+}
+
+.rounded-full,
+.rounded-3xl,
+.rounded-2xl,
+.rounded-xl,
+.rounded-lg,
+.rounded-md {
+  border-radius: 0;
 }
 
 .lab-terminal {
@@ -52,6 +58,7 @@ body {
   content: "";
   pointer-events: none;
   position: absolute;
+  z-index: 2;
   inset: 0;
   background: repeating-linear-gradient(
     to bottom,
@@ -63,8 +70,11 @@ body {
 }
 
 .lab-terminal .xterm {
+  position: relative;
+  z-index: 1;
   height: 100%;
   padding: 8px 4px 4px;
+  cursor: text;
 }
 
 @media (min-width: 640px) {

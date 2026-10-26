@@ -20,7 +20,7 @@ export function SandboxLab() {
   const allowed = planAllows(plan, preset.minPlan);
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-hidden">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line px-3 py-3 sm:px-5 sm:py-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Sandbox</p>

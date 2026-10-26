@@ -9,7 +9,7 @@ export function HeroSession() {
   ] as const;
 
   return (
-    <div className="lab-terminal overflow-hidden rounded-2xl border border-[#145c28] shadow-[0_24px_80px_rgba(0,40,10,0.45)]">
+    <div className="lab-terminal overflow-hidden border border-[#145c28]">
       <div className="relative z-[1] flex items-center justify-between border-b border-[#145c28] px-4 py-3">
         <span className="font-matrix text-xs text-[#7dff9a]">student@aterx</span>
         <span className="font-matrix text-[10px] uppercase tracking-[0.18em] text-[#c6ff55]">Lesson 1</span>

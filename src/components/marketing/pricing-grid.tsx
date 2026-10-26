@@ -27,7 +27,7 @@ export function PricingGrid({ mode = "select" }: { mode?: "select" | "link" }) {
             <article
               key={plan.id}
               className={cn(
-                "flex flex-col rounded-2xl border p-5",
+                "flex flex-col border p-5",
                 plan.highlighted ? "border-amber bg-ink-2" : "border-line bg-ink/40",
               )}
             >
@@ -36,7 +36,7 @@ export function PricingGrid({ mode = "select" }: { mode?: "select" | "link" }) {
                 {active ? <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-mint">On this device</span> : null}
               </div>
               <p className="mt-3 flex items-end gap-2">
-                <span className="font-serif text-4xl tracking-tight">{plan.price}</span>
+                <span className="text-3xl text-amber">{plan.price}</span>
                 {plan.period ? <span className="pb-1 text-sm text-muted">{plan.period}</span> : null}
               </p>
               <p className="mt-3 min-h-12 text-sm leading-6 text-muted">{plan.blurb}</p>

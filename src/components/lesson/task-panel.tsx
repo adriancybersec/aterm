@@ -42,7 +42,7 @@ export function TaskPanel({
             <li
               key={task.id}
               className={cn(
-                "rounded-xl border px-3 py-3",
+                "border px-3 py-3",
                 done ? "border-mint/30 bg-mint/5" : current === task.id ? "border-amber/50 bg-ink-2" : "border-line",
               )}
             >
