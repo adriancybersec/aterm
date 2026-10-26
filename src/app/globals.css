@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-matrix), ui-monospace, monospace;
-  --font-serif: var(--font-matrix), ui-monospace, monospace;
-  --font-mono: var(--font-matrix), ui-monospace, monospace;
-  --color-ink: #000000;
-  --color-ink-2: #031208;
-  --color-ink-3: #062614;
-  --color-line: #0e3d20;
-  --color-paper: #d7ffe2;
-  --color-muted: #3ecf6e;
-  --color-faint: #1b7a3a;
-  --color-amber: #00ff41;
-  --color-amber-2: #8dffb0;
-  --color-mint: #39ff6a;
-  --color-danger: #ff5d5d;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --color-ink: #0c0f0e;
+  --color-ink-2: #121816;
+  --color-ink-3: #1a2420;
+  --color-line: #24332c;
+  --color-paper: #e7eee9;
+  --color-muted: #93a89b;
+  --color-faint: #64786c;
+  --color-amber: #3ddc84;
+  --color-amber-2: #8ef0b4;
+  --color-mint: #7dcea0;
+  --color-danger: #ff8b7a;
 }
 
 html {
@@ -22,51 +22,32 @@ html {
 }
 
 body {
-  background: #000;
+  background: var(--color-ink);
   color: var(--color-paper);
   font-family: var(--font-sans);
 }
 
 ::selection {
-  background: #00ff41;
-  color: #001400;
+  background: #3ddc84;
+  color: #062014;
 }
 
 :focus-visible {
-  outline: 2px solid #00ff41;
+  outline: 2px solid #3ddc84;
   outline-offset: 2px;
-}
-
-.rounded-full,
-.rounded-3xl,
-.rounded-2xl,
-.rounded-xl,
-.rounded-lg,
-.rounded-md {
-  border-radius: 0;
 }
 
 .lab-terminal {
   position: relative;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(0, 255, 65, 0.08), transparent 55%),
-    #000c00;
-  box-shadow: inset 0 0 80px rgba(0, 255, 65, 0.06);
+  background: #0b110f;
 }
 
-.lab-terminal::after {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 255, 65, 0.045) 0px,
-    rgba(0, 255, 65, 0.045) 1px,
-    transparent 1px,
-    transparent 4px
-  );
+.lab-terminal,
+.lab-terminal .xterm,
+.lab-terminal .xterm-rows,
+.lab-terminal .xterm-char-measure-element,
+.lab-terminal .xterm-helper-textarea {
+  font-family: var(--font-jetbrains), ui-monospace, monospace !important;
 }
 
 .lab-terminal .xterm {
@@ -97,7 +78,7 @@ body {
 }
 
 .font-matrix {
-  font-family: var(--font-matrix), ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 .blink {

@@ -23,7 +23,7 @@ export function PathBoard() {
       <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Lesson path</p>
       <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl text-amber">Five labs. Then you keep going.</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-paper">Five labs. Then you keep going.</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
             Each lab is a folder, a short goal, and a handful of tasks. The terminal marks a task when the command or the filesystem matches.
           </p>

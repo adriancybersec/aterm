@@ -5,34 +5,33 @@ import type { GradeContext } from "@/lib/lessons/grader";
 import type { LabSeed, LabShell } from "@/lib/shell/shell";
 
 const theme = {
-  background: "#000c00",
-  foreground: "#39ff6a",
-  cursor: "#d8ffd8",
-  cursorAccent: "#001400",
-  selectionBackground: "#0c4d22",
-  selectionForeground: "#e9ffe9",
-  black: "#001400",
-  red: "#ff6b6b",
-  green: "#00ff41",
-  yellow: "#c6ff55",
-  blue: "#5dffb0",
-  magenta: "#8dffc0",
-  cyan: "#7dffa8",
-  white: "#c8ffd4",
-  brightBlack: "#1c6b32",
-  brightRed: "#ff9b9b",
-  brightGreen: "#7dff9a",
-  brightYellow: "#d8ff8a",
-  brightBlue: "#b4ffd6",
-  brightMagenta: "#d2ffe4",
-  brightCyan: "#e4fff0",
-  brightWhite: "#f4fff6",
+  background: "#0b110f",
+  foreground: "#d5f5e0",
+  cursor: "#3ddc84",
+  cursorAccent: "#062014",
+  selectionBackground: "#1c4d32",
+  selectionForeground: "#e7eee9",
+  black: "#0b110f",
+  red: "#ff8b7a",
+  green: "#3ddc84",
+  yellow: "#d6e38a",
+  blue: "#8fd0c4",
+  magenta: "#c7b0e8",
+  cyan: "#8ee0c8",
+  white: "#e7eee9",
+  brightBlack: "#5d7366",
+  brightRed: "#ffb0a4",
+  brightGreen: "#8ef0b4",
+  brightYellow: "#e7f0b0",
+  brightBlue: "#b7e6dc",
+  brightMagenta: "#ddcdee",
+  brightCyan: "#c6f3e4",
+  brightWhite: "#f4fff8",
 };
 
-function matrixFontFamily() {
-  const raw = getComputedStyle(document.documentElement).getPropertyValue("--font-matrix").trim();
-  const family = raw.replace(/^["']|["']$/g, "");
-  return family ? `${family}, ui-monospace, monospace` : '"Share Tech Mono", ui-monospace, monospace';
+function terminalFontFamily() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--font-jetbrains").trim();
+  return raw || '"JetBrains Mono", ui-monospace, monospace';
 }
 
 function terminalFontSize() {
@@ -87,7 +86,7 @@ export function LabTerminal({
 
       const term = new Terminal({
         cursorBlink: true,
-        fontFamily: matrixFontFamily(),
+        fontFamily: terminalFontFamily(),
         fontSize: terminalFontSize(),
         lineHeight: 1.25,
         theme,

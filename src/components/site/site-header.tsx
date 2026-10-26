@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Logo } from "@/components/site/logo";
 
 const links = [
   { href: "/learn", label: "path" },
@@ -16,8 +17,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-black">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="text-amber tracking-wide" onClick={() => setOpen(false)}>
-          aterx
+        <Link href="/" onClick={() => setOpen(false)} aria-label="Aterx home">
+          <Logo />
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-faint md:flex">
           {links.map((link) => (

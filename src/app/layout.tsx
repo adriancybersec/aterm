@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Share_Tech_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site/site-header";
 import "./globals.css";
 
-const matrix = Share_Tech_Mono({
+const inter = Inter({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-matrix",
+  variable: "--font-inter",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains",
 });
 
 export const metadata: Metadata = {
@@ -21,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-AU" className={`${matrix.variable} h-full`}>
+    <html lang="en-AU" className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <a
           href="#content"

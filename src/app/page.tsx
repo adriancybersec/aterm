@@ -11,7 +11,7 @@ export default function HomePage() {
         <section className="grid items-end gap-10 py-12 lg:grid-cols-[0.9fr_1.1fr] lg:py-16">
           <div>
             <p className="text-xs tracking-[0.22em] text-faint">LINUX LAB</p>
-            <h1 className="mt-4 text-4xl leading-tight text-amber sm:text-5xl">Type the command.</h1>
+            <h1 className="mt-4 text-4xl font-medium leading-tight tracking-tight text-paper sm:text-5xl">Type the command.</h1>
             <p className="mt-4 max-w-md text-sm leading-7 text-muted">
               Short labs for first and second year cyber students. A folder, a few tasks, and a terminal that marks the work.
             </p>

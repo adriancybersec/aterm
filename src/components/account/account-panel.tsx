@@ -25,7 +25,7 @@ export function AccountPanel() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Account</p>
-      <h1 className="mt-3 text-3xl text-amber">Stored on this device.</h1>
+      <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper">Stored on this device.</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
         Aterx keeps your name, plan, and marked tasks in local storage. Nothing is sent to a server. Clearing the site data clears the account.
       </p>
