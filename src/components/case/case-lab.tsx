@@ -45,7 +45,7 @@ function CaseStart() {
         <h1 className="mt-3 max-w-2xl text-3xl font-medium tracking-tight text-paper">{CASE_COMPANY}</h1>
         <div className="mt-6 max-w-2xl space-y-4 text-sm leading-7 text-muted">
           <p>
-            Make a practice log for this office. You read what each IP address did. A new case asks different questions. It also changes the IP addresses, which ones look wrong, and the website names.
+            Make a practice log for this office. You read what each IP address did. Each time you generate a case, the questions are different. The IP addresses, which ones look wrong, and the website names change too.
           </p>
           <p>
             Use grep and find to read the logs. Open a hint if you get stuck. There is more than one hint on each step. A step ticks when you are right, and the next step stays locked until then.
@@ -55,7 +55,7 @@ function CaseStart() {
           </p>
           <p>The IP addresses and websites are fake. They are only for this lab. Notes stay on this device with the case.</p>
         </div>
-        <Button className="mt-8" onClick={() => saveCase(generateCase(randomUnit, loadCase()?.questionSet))}>
+        <Button className="mt-8" onClick={() => saveCase(generateCase(randomUnit, loadCase()?.questions))}>
           Generate case
         </Button>
       </main>
@@ -217,7 +217,7 @@ function CaseSession() {
           </Button>
           <Button
             onClick={() => {
-              saveCase(generateCase(randomUnit, loadCase()?.questionSet));
+              saveCase(generateCase(randomUnit, loadCase()?.questions));
             }}
           >
             Generate
@@ -259,8 +259,9 @@ function TaskList({ tasks, completed, openIndex }: { tasks: CaseTask[]; complete
                 >
                   {done ? <Check className="h-3 w-3" aria-hidden /> : locked ? <Lock className="h-3 w-3" aria-hidden /> : index + 1}
                 </span>
-                <p className="text-sm leading-6">{locked ? "Locked. Finish the step above first." : task.prompt}</p>
+                <p className="text-sm leading-6">{task.prompt}</p>
               </div>
+              {locked ? <p className="mt-2 pl-7 text-sm leading-6 text-muted">Finish the step above first.</p> : null}
               {done ? <p className="mt-3 pl-7 font-mono text-[11px] uppercase tracking-[0.12em] text-mint">Marked</p> : null}
               {current ? <HintSteps key={task.id} hints={task.hints} /> : null}
             </li>

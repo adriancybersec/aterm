@@ -20,7 +20,7 @@ import {
   withFinding,
   type OfficeCase,
 } from "../src/lib/case/model";
-import { QUESTION_SETS, type TaskCheck } from "../src/lib/case/questions";
+import { allQuestionPicks, type TaskCheck } from "../src/lib/case/questions";
 import { LabShell, type GradeContext } from "../src/lib/shell/shell";
 
 function mulberry32(seed: number): () => number {
@@ -51,7 +51,7 @@ function skeleton(spec: OfficeCase, text: string): string {
 
 const sample: OfficeCase = {
   id: "abc12345",
-  questionSet: "missing-pages",
+  questions: ["odd-ip", "downloader", "mail-site"],
   scannerIp: "203.0.113.10",
   callerIp: "198.51.100.20",
   staffIps: ["192.0.2.11", "192.0.2.12", "192.0.2.13", "192.0.2.14"],
@@ -105,18 +105,26 @@ describe("office case", () => {
     expect(sites.size).toBeGreaterThan(1);
   });
 
-  it("asks different questions, and a new case does not repeat the set you just had", () => {
-    const lists = QUESTION_SETS.map((set) => set.tasks.map((task) => task.prompt));
-    for (const prompts of lists) expect(new Set(prompts).size).toBe(prompts.length);
-    expect(new Set(lists.map((prompts) => prompts.join("\n"))).size).toBe(QUESTION_SETS.length);
+  it("asks different questions on every generate", () => {
+    const prompts = (spec: OfficeCase) => tasksFor(spec).map((task) => task.prompt).join("\n");
+    const picks = allQuestionPicks();
+    expect(picks.length).toBeGreaterThan(20);
+    for (const questions of picks) {
+      const list = tasksFor({ questions }).map((task) => task.prompt);
+      expect(new Set(list).size).toBe(list.length);
+    }
+    expect(new Set(picks.map((questions) => prompts({ ...sample, questions }))).size).toBe(picks.length);
 
     const seen = new Set<string>();
     for (let seed = 1; seed <= 40; seed += 1) {
       const spec = generateCase(mulberry32(seed));
-      seen.add(spec.questionSet);
-      expect(generateCase(mulberry32(seed + 100), spec.questionSet).questionSet).not.toBe(spec.questionSet);
+      const key = [...spec.questions].sort().join(",");
+      seen.add(key);
+      const next = generateCase(mulberry32(seed), spec.questions);
+      expect([...next.questions].sort().join(",")).not.toBe(key);
+      expect(prompts(next)).not.toBe(prompts(spec));
     }
-    expect(seen.size).toBe(QUESTION_SETS.length);
+    expect(seen.size).toBeGreaterThan(20);
   });
 
   it("puts the missing pages on one address and the odd website on one caller", () => {
@@ -163,28 +171,29 @@ describe("office case", () => {
     expect(scanner.messages).toEqual(["marked — odd IP"]);
     expect(scanner.completed).toEqual(["find-access", "odd-ip"]);
 
-    const page = session.run(`echo ${answerValue(sample, "first-page")} > answers/page.txt`);
-    expect(page.completed).toEqual(["find-access", "odd-ip", "first-page"]);
+    const download = session.run(`echo ${answerValue(sample, "downloader")} > answers/download.txt`);
+    expect(download.completed).toEqual(["find-access", "odd-ip", "downloader"]);
 
-    const count = session.run(`echo ${answerValue(sample, "miss-count")} > answers/count.txt`);
-    expect(count.messages).toEqual(["marked — count"]);
-    expect(count.completed).toEqual(["find-access", "odd-ip", "first-page", "miss-count"]);
+    const mailed = session.run(`echo ${sample.sites[0]} > answers/mail-site.txt`);
+    expect(mailed.messages).toEqual(["marked — mailed website"]);
+    expect(mailed.completed).toEqual(["find-access", "odd-ip", "downloader", "mail-site"]);
   });
 
   it("does not open a later step until the one above is marked", () => {
     const session = play(sample);
-    const early = session.run(`echo ${answerValue(sample, "first-page")} > answers/page.txt`);
+    const early = session.run(`echo ${answerValue(sample, "downloader")} > answers/download.txt`);
     expect(early.completed).toEqual([]);
 
     session.run("find . -name access.log");
     const both = session.run(`echo ${sample.scannerIp} > answers/odd-ip.txt`);
-    expect(both.messages).toEqual(["marked — odd IP", "marked — page name"]);
-    expect(both.completed).toEqual(["find-access", "odd-ip", "first-page"]);
+    expect(both.messages).toEqual(["marked — odd IP", "marked — download"]);
+    expect(both.completed).toEqual(["find-access", "odd-ip", "downloader"]);
   });
 
-  it("solves every question set from the logs", () => {
-    for (const set of QUESTION_SETS) {
-      const spec: OfficeCase = { ...generateCase(mulberry32(7)), questionSet: set.id, completed: [], finding: "" };
+  it("solves every question mix from the logs", () => {
+    const base = generateCase(mulberry32(7));
+    for (const questions of allQuestionPicks()) {
+      const spec: OfficeCase = { ...base, questions, completed: [], finding: "" };
       const session = play(spec);
       for (const task of tasksFor(spec)) {
         const check: TaskCheck = task.check;
@@ -198,38 +207,35 @@ describe("office case", () => {
   });
 
   it("drops a later tick that skipped a step", () => {
-    expect(normalizeCompleted(["opener", "find-access"], "missing-pages")).toEqual(["find-access"]);
-    expect(normalizeCompleted(["finding"], "missing-pages")).toEqual([]);
-    expect(normalizeCompleted(["first-open", "find-visits"], "odd-website")).toEqual(["find-visits"]);
+    expect(normalizeCompleted(["opener", "find-access"], sample.questions)).toEqual(["find-access"]);
+    expect(normalizeCompleted(["finding"], sample.questions)).toEqual([]);
+    expect(normalizeCompleted(["first-open", "find-visits"], ["opener", "mail-ip", "sign-in"])).toEqual(["find-visits"]);
   });
 
   it("keeps the evidence locked until that step is marked, then checks the finding", () => {
     expect(evidenceTimeline(sample, []).map((section) => section.title)).toEqual([]);
     expect(evidenceTimeline(sample, ["find-access", "odd-ip"]).some((section) => section.lines.some((line) => line.includes("not found")))).toBe(true);
     expect(evidenceTimeline(sample, ["find-access", "odd-ip"]).some((section) => section.lines.some((line) => line.includes(sample.suspiciousSite)))).toBe(false);
-    const siteOnly = evidenceTimeline({ ...sample, questionSet: "odd-website" }, ["odd-site"]);
+    const siteOnly = evidenceTimeline(sample, ["odd-site"]);
     expect(siteOnly.some((section) => section.lines.includes(sample.suspiciousSite))).toBe(true);
     expect(siteOnly.some((section) => section.lines.some((line) => line.includes(sample.callerIp)))).toBe(false);
 
-    const shell = ["find-access", "odd-ip", "first-page", "miss-count"] as OfficeCase["completed"];
+    const shell = ["find-access", "odd-ip", "downloader", "mail-site"] as OfficeCase["completed"];
     const done = { ...sample, completed: shell };
     const short = withFinding(done, `${sample.scannerIp} tried pages`);
     expect(short.completed.includes("finding")).toBe(false);
     expect(findingGaps(done, short.finding).length).toBeGreaterThan(0);
 
-    const note = `${sample.scannerIp} tried pages that were not found. I would show these log lines to the office and ask them to look at that address.`;
+    const note = `${sample.scannerIp} tried pages that were not found. ${answerValue(sample, "downloader")} downloaded the price list. The mail log also names ${sample.sites[0]}. I would tell the office to check those lines.`;
     expect(findingReady(done, note)).toBe(true);
     expect(withFinding(done, note).completed).toEqual([...shell, "finding"]);
     expect(withFinding(sample, note).completed.includes("finding")).toBe(false);
+    expect(findingReady(done, note.replace(sample.sites[0], sample.suspiciousSite))).toBe(false);
     expect(resumeNote()).toContain("Practice log review");
-
-    const mail = { ...done, questionSet: "mail-day" as const, completed: ["find-mail", "mail-ip", "mail-count", "mail-site"] as OfficeCase["completed"] };
-    const mailNote = `${answerValue(mail, "mail-ip")} sent the first office mail. The mail log also names ${mail.sites[0]}. I would tell the office what the mail log showed.`;
-    expect(findingReady(mail, mailNote)).toBe(true);
-    expect(findingReady(mail, mailNote.replace(mail.sites[0], mail.suspiciousSite))).toBe(false);
 
     const older = { ...generateCase(mulberry32(4)), finding: undefined };
     expect(isOfficeCase(older)).toBe(true);
-    expect(isOfficeCase({ ...sample, questionSet: undefined })).toBe(false);
+    expect(isOfficeCase({ ...sample, questions: undefined })).toBe(false);
+    expect(isOfficeCase({ ...sample, questions: ["odd-ip", "first-page", "miss-count"] })).toBe(false);
   });
 });

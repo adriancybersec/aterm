@@ -38,7 +38,7 @@ export function loadCase(): OfficeCase | null {
     cachedCase = {
       ...parsed,
       finding: typeof parsed.finding === "string" ? parsed.finding.slice(0, 2000) : "",
-      completed: normalizeCompleted(parsed.completed, parsed.questionSet),
+      completed: normalizeCompleted(parsed.completed, parsed.questions),
       notes: parsed.notes.slice(0, 4000),
     };
     return cachedCase;
@@ -54,7 +54,7 @@ export function saveCase(spec: OfficeCase): void {
     ...spec,
     notes: spec.notes.slice(0, 4000),
     finding: spec.finding.slice(0, 2000),
-    completed: normalizeCompleted(spec.completed, spec.questionSet),
+    completed: normalizeCompleted(spec.completed, spec.questions),
   };
   const raw = JSON.stringify(next);
   window.localStorage.setItem(KEY, raw);

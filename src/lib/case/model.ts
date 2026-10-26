@@ -1,18 +1,17 @@
 import type { LabSeed } from "../shell/shell";
 import type { SeedFile } from "../shell/vfs";
 import {
-  isQuestionSetId,
-  questionSet,
-  QUESTION_SETS,
-  tasksForSet,
+  findingName,
+  pickQuestions,
+  questionGroup,
+  tasksForIds,
   type AnswerKey,
+  type AnswerTaskId,
   type CaseTask,
   type CaseTaskId,
-  type QuestionSetId,
 } from "./questions";
 
-export type { CaseTask, CaseTaskId, QuestionSetId };
-export { tasksForSet };
+export type { AnswerTaskId, CaseTask, CaseTaskId };
 
 export const CASE_COMPANY = "Brightwater Office";
 export const COMPANY_SITE = "brightwater.example";
@@ -41,13 +40,9 @@ const ODD_SITES = [
   "edge-collector.example",
 ];
 
-export function tasksFor(spec: Pick<OfficeCase, "questionSet">): CaseTask[] {
-  return tasksForSet(spec.questionSet);
-}
-
 export type OfficeCase = {
   id: string;
-  questionSet: QuestionSetId;
+  questions: AnswerTaskId[];
   scannerIp: string;
   callerIp: string;
   staffIps: string[];
@@ -58,6 +53,10 @@ export type OfficeCase = {
   finding: string;
   completed: CaseTaskId[];
 };
+
+export function tasksFor(spec: Pick<OfficeCase, "questions">): CaseTask[] {
+  return tasksForIds(spec.questions);
+}
 
 const IP_PATTERN = /^(203\.0\.113|198\.51\.100|192\.0\.2)\.(?:[1-9]|[1-9]\d|1\d{2}|2[0-4]\d|25[0-4])$/;
 const SITE_PATTERN = /^[a-z0-9.-]+\.example$/;
@@ -95,15 +94,14 @@ function caseId(rng: () => number): string {
   return id;
 }
 
-export function generateCase(rng: () => number = randomUnit, avoid?: QuestionSetId): OfficeCase {
-  const choices = QUESTION_SETS.map((set) => set.id).filter((id) => id !== avoid);
-  const questionSet = choices[Math.floor(rng() * choices.length)] ?? QUESTION_SETS[0].id;
+export function generateCase(rng: () => number = randomUnit, avoid?: readonly string[]): OfficeCase {
+  const questions = pickQuestions(rng, avoid);
   const ips = pickIps(8, rng);
   const scannerIp = ips[0];
   const callerIp = rng() < 0.5 ? scannerIp : ips[1];
   return {
     id: caseId(rng),
-    questionSet,
+    questions,
     scannerIp,
     callerIp,
     staffIps: ips.slice(2, 6),
@@ -283,18 +281,25 @@ export function answerValue(spec: OfficeCase, key: AnswerKey): string {
   if (key === "mail-ip") return ipOn(mail.find((line) => line.includes(`team@${COMPANY_SITE}`)) ?? "");
   if (key === "mail-count") return String(mail.length);
   if (key === "downloader") return ipOn(access.find((line) => line.includes("downloaded")) ?? "");
-  return ipOn(access.find((line) => line.includes("signed in")) ?? "");
+  if (key === "sign-in") return ipOn(access.find((line) => line.includes("signed in")) ?? "");
+  if (key === "last-page") {
+    const line = [...access].reverse().find((item) => item.includes("not found")) ?? "";
+    return line.split(/\s+/).find((part) => part.startsWith("/")) ?? "";
+  }
+  if (key === "odd-count") return String(visits.filter((line) => line.endsWith(`opened ${spec.suspiciousSite}`)).length);
+  if (key === "contact-ip") return ipOn(access.find((line) => line.includes("opened the contact page")) ?? "");
+  return String(access.filter((line) => line.includes("opened the home page")).length);
 }
 
 export function evidenceTimeline(spec: OfficeCase, completed: readonly string[]): { title: string; lines: string[] }[] {
   const sections: { title: string; lines: string[] }[] = [];
   const access = accessLog(spec).trim().split("\n");
   const has = (id: string) => completed.includes(id);
-  if (has("odd-ip") || has("first-page") || has("miss-count")) {
+  if (has("odd-ip") || has("first-page") || has("miss-count") || has("last-page")) {
     sections.push({ title: "Pages that were not found", lines: access.filter((line) => line.includes("not found")) });
   }
   if (has("odd-site")) sections.push({ title: "Not on the allow list", lines: [spec.suspiciousSite] });
-  if (has("opener") || has("first-open")) {
+  if (has("opener") || has("first-open") || has("odd-count")) {
     sections.push({
       title: "Who opened it",
       lines: visitsLog(spec)
@@ -308,40 +313,29 @@ export function evidenceTimeline(spec: OfficeCase, completed: readonly string[])
   }
   if (has("downloader")) sections.push({ title: "Downloaded", lines: access.filter((line) => line.includes("downloaded")) });
   if (has("sign-in")) sections.push({ title: "Signed in", lines: access.filter((line) => line.includes("signed in")) });
+  if (has("contact-ip")) sections.push({ title: "Contact page", lines: access.filter((line) => line.includes("opened the contact page")) });
+  if (has("home-count")) sections.push({ title: "Home page", lines: access.filter((line) => line.includes("opened the home page")) });
   return sections;
+}
+
+function mentions(body: string, value: string): boolean {
+  if (/^\d+$/.test(value)) return new RegExp(`(^|[^0-9])${value}([^0-9]|$)`).test(body);
+  return body.includes(value);
 }
 
 export function findingGaps(spec: OfficeCase, text: string): string[] {
   const body = text.trim();
   const gaps: string[] = [];
-  const set = questionSet(spec.questionSet);
-  for (const need of set.findingNeeds) {
-    const value =
-      need === "odd-ip"
-        ? spec.scannerIp
-        : need === "opener"
-          ? spec.callerIp
-          : need === "odd-site"
-            ? spec.suspiciousSite
-            : need === "mail-ip"
-              ? answerValue(spec, "mail-ip")
-              : answerValue(spec, "downloader");
-    const label =
-      need === "odd-site"
-        ? "Add the website that is not allowed."
-        : need === "mail-ip"
-          ? "Add the IP that sent the first office mail."
-          : need === "downloader"
-            ? "Add the IP that downloaded the price list."
-            : need === "opener"
-              ? "Add the IP that opened the website."
-              : "Add the odd IP address.";
-    if (!body.includes(value)) gaps.push(label);
+  for (const id of spec.questions) {
+    const task = tasksForIds([id]).find((item) => item.id === id);
+    if (task?.check.kind === "one-of") {
+      if (!spec.sites.some((site) => body.includes(site))) gaps.push(`Add ${findingName(id)}.`);
+      continue;
+    }
+    if (task?.check.kind !== "exact") continue;
+    if (!mentions(body, answerValue(spec, task.check.key))) gaps.push(`Add ${findingName(id)}.`);
   }
-  if (spec.questionSet === "mail-day" && !spec.sites.some((site) => body.includes(site))) {
-    gaps.push("Add one other website from the mail log.");
-  }
-  if (!set.findingPattern.test(body)) gaps.push(set.findingHint);
+  if (!/tell the office|i would/i.test(body)) gaps.push("Say what you would tell the office.");
   if (body.length < 80) gaps.push("Write at least two sentences.");
   return gaps;
 }
@@ -368,7 +362,9 @@ export function isOfficeCase(value: unknown): value is OfficeCase {
   if (!value || typeof value !== "object") return false;
   const spec = value as Partial<OfficeCase>;
   if (typeof spec.id !== "string" || !/^[0-9a-f]{8}$/.test(spec.id)) return false;
-  if (!isQuestionSetId(spec.questionSet)) return false;
+  if (!Array.isArray(spec.questions) || spec.questions.length !== 3) return false;
+  const groups = spec.questions.map((id) => (typeof id === "string" ? questionGroup(id) : -1));
+  if (groups.some((group) => group < 0) || new Set(groups).size !== 3) return false;
   if (typeof spec.notes !== "string" || spec.notes.length > 4000) return false;
   if (spec.finding !== undefined && (typeof spec.finding !== "string" || spec.finding.length > 2000)) return false;
   const ips = [spec.scannerIp, spec.callerIp, ...(spec.staffIps ?? []), ...(spec.noiseIps ?? [])];
@@ -386,10 +382,10 @@ export function isOfficeCase(value: unknown): value is OfficeCase {
   return true;
 }
 
-export function normalizeCompleted(ids: unknown, setId: QuestionSetId): CaseTaskId[] {
+export function normalizeCompleted(ids: unknown, questions: readonly AnswerTaskId[]): CaseTaskId[] {
   const have = new Set(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []);
   const completed: CaseTaskId[] = [];
-  for (const task of tasksForSet(setId)) {
+  for (const task of tasksForIds(questions)) {
     if (!have.has(task.id)) break;
     completed.push(task.id);
   }

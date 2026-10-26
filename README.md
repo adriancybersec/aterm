@@ -141,7 +141,7 @@ Set `minPlan` to `pro` or `plus` if the lesson should stay behind those plans. F
 
 ## Case
 
-`/case` builds a fictional Brightwater Office log in the browser. Each line is a time, an IP address, and what that person did: pages they opened, pages that were not found, websites they visited, and mail they sent. Each generate picks a different question set: missing pages, an odd website, the mail log, or a normal office day. It also swaps the documentation-range addresses, which of those addresses are the odd ones, and the `.example` website names.
+`/case` builds a fictional Brightwater Office log in the browser. Each line is a time, an IP address, and what that person did: pages they opened, pages that were not found, websites they visited, and mail they sent. Each generate picks a different mix of questions from the logs, and it will not repeat the mix you just had. It also swaps the documentation-range addresses, which of those addresses are the odd ones, and the `.example` website names.
 
 The steps stay in order. A later step stays locked until the one above is marked. Each step has several hints. The last step is a short finding. The report keeps the log lines as evidence and, once the finding is marked, a resume note you can copy. Notes and the finding are stored with the case in `localStorage` under `aterx.case.v1`. Leaving the page resets the live folder and keeps the ticks, the same way a lesson does.
 
