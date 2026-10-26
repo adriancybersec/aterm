@@ -1,0 +1,126 @@
+{
+  "slug": "search",
+  "number": 5,
+  "title": "Search the tree",
+  "module": "Search",
+  "minutes": 15,
+  "minPlan": "pro",
+  "goal": "Find lines in a log and files in a case folder, without scrolling by hand.",
+  "cwd": "/home/student",
+  "cheatSheet": [
+    { "command": "grep ERROR file", "description": "Print lines that contain the literal text ERROR." },
+    { "command": "grep -n WARN file", "description": "Same search, with line numbers." },
+    { "command": "grep -c ERROR file", "description": "Print how many lines matched, not the lines." },
+    { "command": "grep -r TODO dir", "description": "Search every file under a directory." },
+    { "command": "find path -name '*.txt'", "description": "Find files by name. Quote the pattern so the shell does not expand it." },
+    { "command": "find path -type d", "description": "List directories only. -type f is files only." }
+  ],
+  "files": [
+    {
+      "path": "/home/student/cases/alpha/notes.txt",
+      "content": "TODO confirm the backup window with the tutor\nStatus: open\n"
+    },
+    {
+      "path": "/home/student/cases/beta/notes.txt",
+      "content": "No follow-up in this note.\nStatus: closed\n"
+    },
+    {
+      "path": "/home/student/cases/beta/evidence/disk.txt",
+      "content": "Filesystem /dev/sda1 is 80% full\n"
+    },
+    {
+      "path": "/home/student/logs/app.log",
+      "content": "2026-10-26T09:00:01 INFO backup started\n2026-10-26T09:00:04 INFO reading /home/student/cases\n2026-10-26T09:00:06 WARN backup window is almost closed\n2026-10-26T09:00:08 INFO copied alpha notes\n2026-10-26T09:00:09 ERROR disk quota exceeded on /home\n2026-10-26T09:00:11 WARN retrying copy in 30 seconds\n2026-10-26T09:00:41 INFO retry started\n2026-10-26T09:00:44 ERROR disk quota exceeded on /home\n2026-10-26T09:01:10 WARN tutor notified about disk space\n2026-10-26T09:05:00 INFO cleanup removed temp files\n2026-10-26T09:05:02 INFO backup finished\n2026-10-26T09:05:03 ERROR report email delayed\n"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "grep-error",
+      "prompt": "Print the lines in logs/app.log that contain ERROR.",
+      "hint": "grep PATTERN file. Without -E the pattern is plain text.",
+      "solution": "grep ERROR logs/app.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*grep\\b" },
+          { "type": "outputIncludes", "text": "disk quota exceeded" },
+          { "type": "outputExcludes", "text": "backup started" }
+        ]
+      }
+    },
+    {
+      "id": "grep-warn-numbers",
+      "prompt": "Show WARN lines in logs/app.log with line numbers.",
+      "hint": "Add -n. The number comes before the line.",
+      "solution": "grep -n WARN logs/app.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*grep\\b" },
+          { "type": "command", "pattern": "(^|\\s)(-[a-zA-Z]*n[a-zA-Z]*|--line-number)(\\s|$)" },
+          { "type": "outputMatches", "pattern": "\\d+:.*WARN" }
+        ]
+      }
+    },
+    {
+      "id": "grep-count",
+      "prompt": "Count the ERROR lines in logs/app.log. Print the count, not the lines.",
+      "hint": "grep -c prints a number. There are three ERROR lines in this file.",
+      "solution": "grep -c ERROR logs/app.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*grep\\b" },
+          { "type": "command", "pattern": "(^|\\s)(-[a-zA-Z]*c[a-zA-Z]*|--count)(\\s|$)" },
+          { "type": "command", "pattern": "ERROR" },
+          { "type": "stdoutEquals", "text": "3" }
+        ]
+      }
+    },
+    {
+      "id": "grep-recursive",
+      "prompt": "Search the cases directory for the literal text TODO.",
+      "hint": "grep -r walks a directory. The matching path is printed in front of the line.",
+      "solution": "grep -r TODO cases",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*grep\\b" },
+          { "type": "command", "pattern": "(^|\\s)(-[a-zA-Z]*r[a-zA-Z]*|--recursive)(\\s|$)" },
+          { "type": "outputIncludes", "text": "alpha/notes.txt" },
+          { "type": "outputIncludes", "text": "TODO confirm" }
+        ]
+      }
+    },
+    {
+      "id": "find-txt",
+      "prompt": "Find every .txt file under your home directory.",
+      "hint": "Quote the pattern: find /home/student -name '*.txt'. Otherwise the shell may expand the star first.",
+      "solution": "find /home/student -name '*.txt'",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*find\\b" },
+          { "type": "command", "pattern": "-name\\b" },
+          { "type": "outputIncludes", "text": "disk.txt" },
+          { "type": "outputExcludes", "text": "app.log" }
+        ]
+      }
+    },
+    {
+      "id": "find-dirs",
+      "prompt": "List the directories under cases, and not the files.",
+      "hint": "find cases -type d. Directories only.",
+      "solution": "find cases -type d",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*find\\b" },
+          { "type": "command", "pattern": "-type\\s+d\\b" },
+          { "type": "outputIncludes", "text": "evidence" },
+          { "type": "outputExcludes", "text": "notes.txt" }
+        ]
+      }
+    }
+  ]
+}

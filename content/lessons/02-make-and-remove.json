@@ -1,0 +1,102 @@
+{
+  "slug": "make-and-remove",
+  "number": 2,
+  "title": "Make and remove",
+  "module": "Files and directories",
+  "minutes": 12,
+  "minPlan": "free",
+  "goal": "Create a case folder, add an empty note, and remove the files you no longer need.",
+  "cwd": "/home/student",
+  "cheatSheet": [
+    { "command": "mkdir -p path", "description": "Create a directory and any missing parents." },
+    { "command": "touch path", "description": "Create an empty file, or update the time on one that exists." },
+    { "command": "rm file", "description": "Remove a file. rm on its own will not remove a directory." },
+    { "command": "rm -r dir", "description": "Remove a directory and everything inside it." },
+    { "command": "rmdir dir", "description": "Remove an empty directory. It refuses one that still has files." }
+  ],
+  "files": [
+    {
+      "path": "/home/student/cases/draft.txt",
+      "content": "Scratch file. Remove this once your folder exists.\n"
+    },
+    {
+      "path": "/home/student/cases/old/stale.txt",
+      "content": "Superseded draft. Remove the whole old directory.\n"
+    },
+    {
+      "path": "/home/student/cases/inbox/readme.txt",
+      "content": "Incoming notes land here. Leave this folder as it is.\n"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "make-tree",
+      "prompt": "Create the directory cases/incidents/2026-03-auth, including any missing parents.",
+      "hint": "mkdir stops if a parent is missing. -p creates the chain.",
+      "solution": "mkdir -p cases/incidents/2026-03-auth",
+      "check": {
+        "type": "pathExists",
+        "path": "/home/student/cases/incidents/2026-03-auth",
+        "kind": "dir"
+      }
+    },
+    {
+      "id": "touch-notes",
+      "prompt": "Add an empty notes.txt inside that new directory.",
+      "hint": "touch creates an empty file. Use the full path from home, or cd in first.",
+      "solution": "touch cases/incidents/2026-03-auth/notes.txt",
+      "check": {
+        "type": "pathExists",
+        "path": "/home/student/cases/incidents/2026-03-auth/notes.txt",
+        "kind": "file"
+      }
+    },
+    {
+      "id": "remove-draft",
+      "prompt": "Remove cases/draft.txt.",
+      "hint": "rm takes the file path. It does not ask for confirmation in this lab.",
+      "solution": "rm cases/draft.txt",
+      "check": { "type": "pathMissing", "path": "/home/student/cases/draft.txt" }
+    },
+    {
+      "id": "remove-old",
+      "prompt": "Remove the cases/old directory and the file inside it.",
+      "hint": "A plain rm refuses a directory. -r removes the directory and its contents.",
+      "solution": "rm -r cases/old",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*rm\\b" },
+          { "type": "command", "pattern": "(^|\\s)-[a-zA-Z]*r[a-zA-Z]*(\\s|$)" },
+          { "type": "pathMissing", "path": "/home/student/cases/old" },
+          { "type": "exitCode", "equals": 0 }
+        ]
+      }
+    },
+    {
+      "id": "make-empty",
+      "prompt": "Create an empty directory called cases/empty-dir.",
+      "hint": "mkdir is enough. You do not need -p if cases already exists.",
+      "solution": "mkdir cases/empty-dir",
+      "check": {
+        "type": "pathExists",
+        "path": "/home/student/cases/empty-dir",
+        "kind": "dir"
+      }
+    },
+    {
+      "id": "remove-empty",
+      "prompt": "Remove cases/empty-dir with rmdir.",
+      "hint": "rmdir only works when the directory has nothing in it.",
+      "solution": "rmdir cases/empty-dir",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*rmdir\\b" },
+          { "type": "exitCode", "equals": 0 },
+          { "type": "pathMissing", "path": "/home/student/cases/empty-dir" }
+        ]
+      }
+    }
+  ]
+}

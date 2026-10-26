@@ -1,0 +1,99 @@
+{
+  "slug": "read-files",
+  "number": 3,
+  "title": "Read a file",
+  "module": "Reading files",
+  "minutes": 12,
+  "minPlan": "pro",
+  "goal": "Read a short policy and a lab log without opening an editor.",
+  "cwd": "/home/student",
+  "cheatSheet": [
+    { "command": "cat file", "description": "Print a whole file. Fine for short notes, noisy for long logs." },
+    { "command": "head -n 5 file", "description": "Print the first 5 lines. The default is 10." },
+    { "command": "tail -n 20 file", "description": "Print the last 20 lines. Useful on logs, not required in this lab." },
+    { "command": "less file", "description": "Read a screen at a time. Space moves forward, b goes back, q quits." },
+    { "command": "cat a b", "description": "Print two files, one after the other." }
+  ],
+  "files": [
+    {
+      "path": "/home/student/docs/policy.txt",
+      "content": "Lab machine policy\n------------------\nDo not share your lab login.\nRead files before you change them.\nKeep notes in your home directory.\nAsk your tutor before you touch a shared folder.\nThis file is safe to read with cat.\n"
+    },
+    {
+      "path": "/home/student/logs/auth.log",
+      "content": "Oct 26 08:01:02 lab-01 sshd[1201]: Accepted publickey for student from 10.0.0.14 port 51402 ssh2\nOct 26 08:01:02 lab-01 sshd[1201]: pam_unix(sshd:session): session opened for user student\nOct 26 08:22:10 lab-01 CRON[1330]: (student) CMD (/usr/local/bin/lab-backup)\nOct 26 09:02:18 lab-01 sshd[1402]: Failed password for guest from 10.0.0.50 port 41888 ssh2\nOct 26 09:02:21 lab-01 sshd[1402]: Failed password for guest from 10.0.0.50 port 41890 ssh2\nOct 26 09:02:24 lab-01 sshd[1402]: Connection closed by authenticating user guest 10.0.0.50 port 41890 [preauth]\nOct 26 09:05:01 lab-01 CRON[1501]: (root) CMD (/usr/lib/systemd/system/logrotate)\nOct 26 09:16:40 lab-01 sshd[1510]: Accepted publickey for student from 10.0.0.14 port 51510 ssh2\nOct 26 09:40:12 lab-01 lab-backup[1600]: backup finished, 42 files\nOct 26 10:01:00 lab-01 CRON[1702]: (student) CMD (/usr/local/bin/lab-backup)\nOct 26 10:11:05 lab-01 sshd[1711]: Received disconnect from 10.0.0.14 port 51510\nOct 26 10:11:05 lab-01 sshd[1711]: pam_unix(sshd:session): session closed for user student\n"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "cat-policy",
+      "prompt": "Print the whole policy in docs/policy.txt.",
+      "hint": "cat prints a file from start to end. Pass the path.",
+      "solution": "cat docs/policy.txt",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*cat\\b" },
+          { "type": "outputIncludes", "text": "Do not share your lab login." },
+          { "type": "stdoutLineCount", "max": 10 }
+        ]
+      }
+    },
+    {
+      "id": "head-five",
+      "prompt": "Show the first 5 lines of logs/auth.log.",
+      "hint": "head -n 5 takes a count. head -5 is the same thing.",
+      "solution": "head -n 5 logs/auth.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*head\\b" },
+          { "type": "outputIncludes", "text": "Accepted publickey for student from 10.0.0.14 port 51402" },
+          { "type": "stdoutLineCount", "min": 5, "max": 5 }
+        ]
+      }
+    },
+    {
+      "id": "head-twelve",
+      "prompt": "Show the first 12 lines of the same log.",
+      "hint": "Change the count. The file is 12 lines, so this prints all of it.",
+      "solution": "head -n 12 logs/auth.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*head\\b" },
+          { "type": "outputIncludes", "text": "session closed for user student" },
+          { "type": "stdoutLineCount", "min": 12, "max": 12 }
+        ]
+      }
+    },
+    {
+      "id": "less-log",
+      "prompt": "Open logs/auth.log in less, then quit with q.",
+      "hint": "less file opens the pager. q leaves it. The task marks when less starts cleanly.",
+      "solution": "less logs/auth.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*less\\b" },
+          { "type": "exitCode", "equals": 0 }
+        ]
+      }
+    },
+    {
+      "id": "cat-both",
+      "prompt": "Print the policy and the log in one command, policy first.",
+      "hint": "cat accepts more than one file. They print in the order you write them.",
+      "solution": "cat docs/policy.txt logs/auth.log",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*cat\\b" },
+          { "type": "outputIncludes", "text": "Do not share your lab login." },
+          { "type": "outputIncludes", "text": "session closed for user student" },
+          { "type": "stdoutLineCount", "min": 15 }
+        ]
+      }
+    }
+  ]
+}

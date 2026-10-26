@@ -1,0 +1,97 @@
+{
+  "slug": "permissions",
+  "number": 4,
+  "title": "Permissions",
+  "module": "Permissions",
+  "minutes": 15,
+  "minPlan": "pro",
+  "goal": "Read a permission string, then tighten a secret and share a note on purpose.",
+  "cwd": "/home/student",
+  "cheatSheet": [
+    { "command": "ls -l", "description": "Read the mode. -rw-r--r-- is owner read/write, everyone else read." },
+    { "command": "chmod 600 file", "description": "Owner can read and write. Group and others have no access." },
+    { "command": "chmod 644 file", "description": "Owner can write. Everyone can read. A normal shared note." },
+    { "command": "chmod u+x file", "description": "Add execute for the owner only. This lab does not run the file." },
+    { "command": "chown user file", "description": "Change the owner. Here you may give away a file you own, so you can see the result." }
+  ],
+  "files": [
+    {
+      "path": "/home/student/lab/secrets.txt",
+      "mode": "644",
+      "content": "API token for the lab dashboard: aterx-lab-demo-token\nThis is fake. Do not reuse it anywhere.\n"
+    },
+    {
+      "path": "/home/student/lab/notes.txt",
+      "mode": "600",
+      "content": "Tutor notes. The group should be able to read this.\n"
+    },
+    {
+      "path": "/home/student/lab/collect.sh",
+      "mode": "644",
+      "content": "#!/bin/bash\necho lab collect\n"
+    },
+    {
+      "path": "/home/student/lab/shared.txt",
+      "mode": "644",
+      "content": "Handover notes for the lab account.\n"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "list-lab",
+      "prompt": "Long-list the lab directory so you can read the modes.",
+      "hint": "ls -l lab from home, or cd lab and then ls -l.",
+      "solution": "ls -l lab",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*ls\\b" },
+          { "type": "command", "pattern": "(^|\\s)-[a-zA-Z]*l[a-zA-Z]*(\\s|$)" },
+          { "type": "outputIncludes", "text": "secrets.txt" }
+        ]
+      }
+    },
+    {
+      "id": "lock-secret",
+      "prompt": "Change lab/secrets.txt so only the owner can read and write it.",
+      "hint": "That mode is 600. chmod 600 takes the file path.",
+      "solution": "chmod 600 lab/secrets.txt",
+      "check": { "type": "mode", "path": "/home/student/lab/secrets.txt", "octal": "600" }
+    },
+    {
+      "id": "still-readable",
+      "prompt": "Read lab/secrets.txt and confirm you still can, now that you are the owner.",
+      "hint": "chmod 600 does not lock the owner out. cat the file after the mode has changed.",
+      "solution": "cat lab/secrets.txt",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*cat\\b" },
+          { "type": "outputIncludes", "text": "aterx-lab-demo-token" },
+          { "type": "mode", "path": "/home/student/lab/secrets.txt", "octal": "600" }
+        ]
+      }
+    },
+    {
+      "id": "share-notes",
+      "prompt": "Make lab/notes.txt readable by everyone, and still writable by the owner.",
+      "hint": "644 means rw-r--r--. The file starts out tighter than that.",
+      "solution": "chmod 644 lab/notes.txt",
+      "check": { "type": "mode", "path": "/home/student/lab/notes.txt", "octal": "644" }
+    },
+    {
+      "id": "make-executable",
+      "prompt": "Add owner execute on lab/collect.sh. Do not run the script.",
+      "hint": "chmod u+x adds the bit for the owner. This lab never executes files.",
+      "solution": "chmod u+x lab/collect.sh",
+      "check": { "type": "ownerExec", "path": "/home/student/lab/collect.sh" }
+    },
+    {
+      "id": "hand-over",
+      "prompt": "Give lab/shared.txt to the lab user.",
+      "hint": "chown lab takes the file next. On a real server only root can do this. This lab allows it so you can see ls -l change.",
+      "solution": "chown lab lab/shared.txt",
+      "check": { "type": "owner", "path": "/home/student/lab/shared.txt", "user": "lab" }
+    }
+  ]
+}

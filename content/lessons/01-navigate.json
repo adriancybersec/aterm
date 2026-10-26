@@ -1,0 +1,120 @@
+{
+  "slug": "navigate",
+  "number": 1,
+  "title": "Find your way around",
+  "module": "Files and directories",
+  "minutes": 12,
+  "minPlan": "free",
+  "goal": "Move through a small lab tree and confirm where you are before you change anything.",
+  "cwd": "/home/student",
+  "cheatSheet": [
+    { "command": "pwd", "description": "Print the working directory. The full path, not a guess." },
+    { "command": "ls", "description": "List names in the current directory." },
+    { "command": "ls -a", "description": "Include hidden names, the ones that start with a dot." },
+    { "command": "ls -l", "description": "Long format: permissions, owner, size, and time." },
+    { "command": "cd path", "description": "Change directory. cd on its own returns home. cd .. goes up one level." }
+  ],
+  "files": [
+    {
+      "path": "/home/student/welcome.txt",
+      "content": "G'day. Your week 1 brief is in labs/week1.\nList a directory before you move into it.\n"
+    },
+    {
+      "path": "/home/student/labs/readme.txt",
+      "content": "Week 1 lives in the week1 directory.\n"
+    },
+    {
+      "path": "/home/student/labs/week1/brief.txt",
+      "content": "Week 1 brief\n------------\nFind this folder, then list it in long format.\nDo not delete anything in this lab.\n"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "print-home",
+      "prompt": "Print the directory you are in.",
+      "hint": "Three letters. It stands for print working directory.",
+      "solution": "pwd",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*pwd\\b" },
+          { "type": "stdoutEquals", "text": "/home/student" }
+        ]
+      }
+    },
+    {
+      "id": "list-hidden",
+      "prompt": "List your home directory, including hidden names.",
+      "hint": "ls on its own hides names that start with a dot. The flag is -a.",
+      "solution": "ls -a",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*ls\\b" },
+          { "type": "command", "pattern": "(^|\\s)(-[a-zA-Z]*a[a-zA-Z]*|--all)(\\s|$)" },
+          { "type": "outputIncludes", "text": ".bashrc" }
+        ]
+      }
+    },
+    {
+      "id": "enter-week1",
+      "prompt": "Move into labs/week1.",
+      "hint": "cd takes a path. You can go one folder at a time, or use labs/week1.",
+      "solution": "cd labs/week1",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*cd\\b" },
+          { "type": "cwd", "equals": "/home/student/labs/week1" }
+        ]
+      }
+    },
+    {
+      "id": "print-week1",
+      "prompt": "Print the directory again so you can see the full path.",
+      "hint": "cd does not print the new path. Run pwd after you arrive.",
+      "solution": "pwd",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*pwd\\b" },
+          { "type": "stdoutEquals", "text": "/home/student/labs/week1" }
+        ]
+      }
+    },
+    {
+      "id": "long-list",
+      "prompt": "List this directory in long format so you can see sizes and permissions.",
+      "hint": "The long flag is -l. You can run it here, or pass the path labs/week1.",
+      "solution": "ls -l",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*ls\\b" },
+          { "type": "command", "pattern": "(^|\\s)-[a-zA-Z]*l[a-zA-Z]*(\\s|$)" },
+          { "type": "outputIncludes", "text": "brief.txt" },
+          {
+            "type": "any",
+            "checks": [
+              { "type": "cwd", "equals": "/home/student/labs/week1" },
+              { "type": "command", "pattern": "week1" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "return-home",
+      "prompt": "Go back to your home directory.",
+      "hint": "cd with no path goes home. cd ~ and cd /home/student do the same.",
+      "solution": "cd",
+      "check": {
+        "type": "all",
+        "checks": [
+          { "type": "command", "pattern": "(^|[|&;])\\s*cd(\\s|$)" },
+          { "type": "cwd", "equals": "/home/student" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-ink: #100e0c;
+  --color-ink-2: #1a1714;
+  --color-ink-3: #26221c;
+  --color-line: #3a342c;
+  --color-paper: #f3eee6;
+  --color-muted: #b7ab9a;
+  --color-faint: #8c8276;
+  --color-amber: #f0a202;
+  --color-amber-2: #ffd37a;
+  --color-mint: #c6e09a;
+  --color-danger: #ff8d7a;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 100% -10%, rgba(240, 162, 2, 0.14), transparent 55%),
+    radial-gradient(700px 380px at -10% 8%, rgba(198, 224, 154, 0.07), transparent 50%),
+    var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: #f0a202;
+  color: #1a1203;
+}
+
+:focus-visible {
+  outline: 2px solid #f0a202;
+  outline-offset: 2px;
+}
+
+.lab-terminal .xterm {
+  height: 100%;
+  padding: 10px 6px 6px;
+}
+
+.lab-terminal .xterm-viewport,
+.lab-terminal .xterm-screen {
+  background-color: transparent !important;
+}
+
+.blink {
+  animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blink {
+    animation: none;
+  }
+}
