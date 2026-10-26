@@ -36,7 +36,9 @@ function matrixFontFamily() {
 }
 
 function terminalFontSize() {
-  return window.matchMedia("(max-width: 1023px)").matches ? 16 : 15;
+  if (window.matchMedia("(max-width: 480px)").matches) return 14;
+  if (window.matchMedia("(max-width: 1023px)").matches) return 16;
+  return 15;
 }
 
 export function LabTerminal({

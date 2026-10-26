@@ -49,7 +49,7 @@ export class LabShell {
 
   start(): void {
     this.emit("\x1b[92mAterx lab\x1b[0m\n");
-    this.emit("Virtual filesystem in this browser. Commands do not run on your computer.\n\n");
+    this.emit("Commands stay in this browser.\n\n");
     this.redraw();
   }
 
