@@ -20,11 +20,11 @@ export function SandboxLab() {
   const allowed = planAllows(plan, preset.minPlan);
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] min-h-[640px] flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line px-4 py-4 sm:px-5">
+    <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line px-3 py-3 sm:px-5 sm:py-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">Sandbox</p>
-          <h1 className="font-serif text-3xl tracking-tight">A folder with no marking.</h1>
+          <h1 className="font-serif text-2xl tracking-tight sm:text-3xl">A folder with no marking.</h1>
           <p className="mt-1 max-w-xl text-sm leading-6 text-muted">{preset.summary}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -60,18 +60,19 @@ export function SandboxLab() {
           <div className="border-b border-line px-4 py-3 lg:hidden">
             <Tabs value={panel} onValueChange={(value) => setPanel(value as "terminal" | "sheet")}>
               <TabsList className="w-full">
-                <TabsTrigger value="terminal">Terminal</TabsTrigger>
-                <TabsTrigger value="sheet">Commands</TabsTrigger>
+                <TabsTrigger className="h-11" value="terminal">Terminal</TabsTrigger>
+                <TabsTrigger className="h-11" value="sheet">Commands</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
-          <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col lg:flex`}>
-              <div className="min-h-0 flex-1">
+          <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col overflow-hidden lg:flex`}>
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <LabTerminal seed={preset} seedKey={preset.id} visible={panel === "terminal"} />
               </div>
               <p className="border-t border-line px-3 py-2 font-mono text-[11px] text-faint">
-                Nothing here is marked. Switching preset restores that folder.
+                <span className="sm:hidden">Tap the screen to type. Nothing here is marked.</span>
+                <span className="hidden sm:inline">Nothing here is marked. Switching preset restores that folder.</span>
               </p>
             </div>
             <div className={panel === "sheet" ? "min-h-0" : "hidden lg:block"}>

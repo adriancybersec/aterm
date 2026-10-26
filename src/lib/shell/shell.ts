@@ -48,7 +48,7 @@ export class LabShell {
   }
 
   start(): void {
-    this.emit("\x1b[33mAterx lab\x1b[0m\n");
+    this.emit("\x1b[92mAterx lab\x1b[0m\n");
     this.emit("Virtual filesystem in this browser. Commands do not run on your computer.\n\n");
     this.redraw();
   }
@@ -62,7 +62,7 @@ export class LabShell {
     this.pager = null;
     this.queuedNotes = [];
     this.pending = "";
-    this.emit("\n\x1b[33mLab reset.\x1b[0m Folder restored. Saved ticks stay.\n");
+    this.emit("\n\x1b[92mLab reset.\x1b[0m Folder restored. Saved ticks stay.\n");
     this.redraw();
   }
 
@@ -75,7 +75,7 @@ export class LabShell {
       this.queuedNotes.push(message);
       return;
     }
-    this.emit(`\x1b[2m· ${message}\x1b[0m\n`);
+    this.emit(`\x1b[92m· ${message}\x1b[0m\n`);
   }
 
   input(data: string): void {
@@ -109,7 +109,7 @@ export class LabShell {
 
   private redraw(): void {
     const cwd = this.prettyCwd();
-    const prompt = `\x1b[32mstudent@aterx\x1b[0m:\x1b[34m${cwd}\x1b[0m$ `;
+    const prompt = `\x1b[92mstudent@aterx\x1b[0m:\x1b[32m${cwd}\x1b[0m$ `;
     this.emit(`\r\x1b[2K${prompt}${this.buffer}`);
     const back = this.buffer.length - this.cursor;
     if (back > 0) this.emit(`\x1b[${back}D`);
@@ -472,7 +472,7 @@ export class LabShell {
   private closePager(): void {
     this.pager = null;
     this.emit("\x1b[2J\x1b[H");
-    for (const note of this.queuedNotes) this.emit(`\x1b[2m· ${note}\x1b[0m\n`);
+    for (const note of this.queuedNotes) this.emit(`\x1b[92m· ${note}\x1b[0m\n`);
     this.queuedNotes = [];
     this.redraw();
   }

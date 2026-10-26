@@ -9,18 +9,18 @@ export function HeroSession() {
   ] as const;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-[#14120f] shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-      <div className="flex items-center justify-between border-b border-line px-4 py-3">
-        <span className="font-mono text-xs text-muted">student@aterx</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber">Lesson 1</span>
+    <div className="lab-terminal overflow-hidden rounded-2xl border border-[#145c28] shadow-[0_24px_80px_rgba(0,40,10,0.45)]">
+      <div className="relative z-[1] flex items-center justify-between border-b border-[#145c28] px-4 py-3">
+        <span className="font-matrix text-xs text-[#7dff9a]">student@aterx</span>
+        <span className="font-matrix text-[10px] uppercase tracking-[0.18em] text-[#c6ff55]">Lesson 1</span>
       </div>
-      <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-paper">
+      <pre className="relative z-[1] overflow-x-auto p-4 font-matrix text-[15px] leading-7 text-[#39ff6a] sm:p-5 sm:text-base">
         {lines.map((line, index) => (
-          <div key={index} className={line.kind === "mark" ? "text-mint" : line.kind === "out" ? "text-muted" : ""}>
-            {line.kind === "prompt" ? <span className="text-mint">student@aterx:~$ </span> : null}
+          <div key={index} className={line.kind === "out" ? "text-[#7dff9a]" : ""}>
+            {line.kind === "prompt" ? <span className="text-[#d8ffd8]">student@aterx:~$ </span> : null}
             {line.kind === "mark" ? "· " : ""}
             {line.text}
-            {index === lines.length - 1 ? <span className="blink text-amber"> ▋</span> : null}
+            {index === lines.length - 1 ? <span className="blink text-[#d8ffd8]"> ▋</span> : null}
           </div>
         ))}
       </pre>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, IBM_Plex_Mono, Outfit } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Outfit, Share_Tech_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site/site-header";
 import "./globals.css";
 
@@ -20,6 +20,12 @@ const plex = IBM_Plex_Mono({
   variable: "--font-plex",
 });
 
+const matrix = Share_Tech_Mono({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-matrix",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Aterx — Learn Linux by typing it",
@@ -31,7 +37,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-AU" className={`${outfit.variable} ${fraunces.variable} ${plex.variable} h-full antialiased`}>
+    <html lang="en-AU" className={`${outfit.variable} ${fraunces.variable} ${plex.variable} ${matrix.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <a
           href="#content"

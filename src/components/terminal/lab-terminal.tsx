@@ -5,22 +5,39 @@ import type { GradeContext } from "@/lib/lessons/grader";
 import type { LabSeed, LabShell } from "@/lib/shell/shell";
 
 const theme = {
-  background: "#14120f",
-  foreground: "#f3eee6",
-  cursor: "#f0a202",
-  cursorAccent: "#14120f",
-  selectionBackground: "#3a342c",
-  black: "#1a1714",
-  red: "#ff8d7a",
-  green: "#c6e09a",
-  yellow: "#f0a202",
-  blue: "#8eb6e0",
-  magenta: "#d7a4e0",
-  cyan: "#8fd0c4",
-  white: "#f3eee6",
-  brightBlack: "#8c8276",
-  brightWhite: "#fffaf3",
+  background: "#000c00",
+  foreground: "#39ff6a",
+  cursor: "#d8ffd8",
+  cursorAccent: "#001400",
+  selectionBackground: "#0c4d22",
+  selectionForeground: "#e9ffe9",
+  black: "#001400",
+  red: "#ff6b6b",
+  green: "#00ff41",
+  yellow: "#c6ff55",
+  blue: "#5dffb0",
+  magenta: "#8dffc0",
+  cyan: "#7dffa8",
+  white: "#c8ffd4",
+  brightBlack: "#1c6b32",
+  brightRed: "#ff9b9b",
+  brightGreen: "#7dff9a",
+  brightYellow: "#d8ff8a",
+  brightBlue: "#b4ffd6",
+  brightMagenta: "#d2ffe4",
+  brightCyan: "#e4fff0",
+  brightWhite: "#f4fff6",
 };
+
+function matrixFontFamily() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--font-matrix").trim();
+  const family = raw.replace(/^["']|["']$/g, "");
+  return family ? `${family}, ui-monospace, monospace` : '"Share Tech Mono", ui-monospace, monospace';
+}
+
+function terminalFontSize() {
+  return window.matchMedia("(max-width: 1023px)").matches ? 16 : 15;
+}
 
 export function LabTerminal({
   seed,
@@ -59,12 +76,14 @@ export function LabTerminal({
       ]);
       await import("@xterm/xterm/css/xterm.css");
       if (cancelled || !hostRef.current) return;
+      await document.fonts.ready;
+      if (cancelled || !hostRef.current) return;
 
       const term = new Terminal({
         cursorBlink: true,
-        fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
-        fontSize: 14,
-        lineHeight: 1.35,
+        fontFamily: matrixFontFamily(),
+        fontSize: terminalFontSize(),
+        lineHeight: 1.25,
         theme,
         scrollback: 2000,
       });
@@ -83,7 +102,10 @@ export function LabTerminal({
       shell.start();
       const subscription = term.onData((data) => shell.input(data));
       const observer = new ResizeObserver(() => {
-        if (host.clientWidth > 0) fit.fit();
+        if (host.clientWidth === 0) return;
+        const size = terminalFontSize();
+        if (term.options.fontSize !== size) term.options.fontSize = size;
+        fit.fit();
       });
       observer.observe(host);
       if (window.matchMedia("(min-width: 1024px)").matches) term.focus();
@@ -112,7 +134,7 @@ export function LabTerminal({
   return (
     <div
       ref={hostRef}
-      className="lab-terminal h-full min-h-[420px] bg-[#14120f]"
+      className="lab-terminal h-full min-h-0"
       role="region"
       aria-label="Lab terminal"
     />

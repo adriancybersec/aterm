@@ -61,13 +61,13 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] min-h-[640px] flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+    <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2 sm:gap-3 sm:px-5 sm:py-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-amber">
             Lesson {lesson.number} of {lessons.length} · {lesson.module}
           </p>
-          <h1 className="truncate font-serif text-2xl tracking-tight">{lesson.title}</h1>
+          <h1 className="truncate font-serif text-xl tracking-tight sm:text-2xl">{lesson.title}</h1>
         </div>
         <div className="flex items-center gap-2">
           <p className="font-mono text-sm text-muted">
@@ -79,23 +79,23 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
           </Button>
         </div>
       </div>
-      <p className="border-b border-line px-4 py-3 text-sm leading-6 text-muted sm:px-5">{lesson.goal}</p>
+      <p className="border-b border-line px-3 py-2 text-sm leading-5 text-muted sm:px-5 sm:py-3 sm:leading-6">{lesson.goal}</p>
 
       {!allowed ? (
         <LockedLesson lesson={lesson} plan={plan} />
       ) : (
         <>
-          <div className="border-b border-line px-4 py-3 lg:hidden">
+          <div className="border-b border-line px-3 py-2 lg:hidden">
             <Tabs value={panel} onValueChange={(value) => setPanel(value as Panel)}>
               <TabsList className="w-full">
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                <TabsTrigger value="terminal">Terminal</TabsTrigger>
-                <TabsTrigger value="sheet">Sheet</TabsTrigger>
+                <TabsTrigger className="h-11" value="tasks">Tasks</TabsTrigger>
+                <TabsTrigger className="h-11" value="terminal">Terminal</TabsTrigger>
+                <TabsTrigger className="h-11" value="sheet">Sheet</TabsTrigger>
               </TabsList>
             </Tabs>
             {current ? <p className="mt-3 text-sm leading-6">Now: {current.prompt}</p> : <p className="mt-3 text-sm text-mint">All tasks marked.</p>}
           </div>
-          <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_270px]">
+          <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)_270px]">
             <div className={panel === "tasks" ? "min-h-0" : "hidden lg:block lg:min-h-0"}>
               <TaskPanel
                 lesson={lesson}
@@ -107,8 +107,8 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
                 onToggleSolution={(id) => toggle(setSolutions, id)}
               />
             </div>
-            <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col lg:flex`}>
-              <div className="min-h-0 flex-1">
+            <div className={`${panel === "terminal" ? "flex" : "hidden"} min-h-0 flex-col overflow-hidden lg:flex`}>
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <LabTerminal
                   seed={seed}
                   seedKey={lesson.slug}
@@ -118,7 +118,8 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
                 />
               </div>
               <p className="border-t border-line px-3 py-2 font-mono text-[11px] tracking-wide text-faint">
-                Enter runs · Tab completes · Up recalls · leaving this page resets the live folder
+                <span className="sm:hidden">Tap the screen to type · Enter runs the line</span>
+                <span className="hidden sm:inline">Enter runs · Tab completes · Up recalls · leaving this page resets the live folder</span>
               </p>
             </div>
             <div className={panel === "sheet" ? "min-h-0" : "hidden lg:block lg:min-h-0"}>
@@ -128,7 +129,7 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
         </>
       )}
 
-      <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm sm:px-5">
+      <div className="flex items-center justify-between gap-3 border-t border-line px-3 py-2 text-sm sm:px-5 sm:py-3">
         {previous ? (
           <Link href={`/learn/${previous.slug}`} className="text-muted hover:text-paper">
             ← {previous.title}
