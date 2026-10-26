@@ -2,7 +2,7 @@ import type { GradeContext } from "../lessons/grader";
 import type { SnapshotFile } from "../shell/vfs";
 import { CASE_TASKS, type CaseTaskId, type OfficeCase } from "./model";
 
-const ANSWERS: Record<Exclude<CaseTaskId, "find-log">, string> = {
+const ANSWERS: Record<Exclude<CaseTaskId, "find-log" | "finding">, string> = {
   scanner: "/home/student/case/answers/scanner.txt",
   site: "/home/student/case/answers/site.txt",
   caller: "/home/student/case/answers/caller.txt",
@@ -29,7 +29,7 @@ function singleLine(files: SnapshotFile[], path: string): string | null {
   return lines[0].trim();
 }
 
-function expected(spec: OfficeCase, id: Exclude<CaseTaskId, "find-log">): string {
+function expected(spec: OfficeCase, id: Exclude<CaseTaskId, "find-log" | "finding">): string {
   if (id === "scanner") return spec.scannerIp;
   if (id === "site") return spec.suspiciousSite;
   return spec.callerIp;
@@ -39,11 +39,12 @@ function passes(id: CaseTaskId, spec: OfficeCase, event: GradeContext): boolean 
   if (id === "find-log") {
     return usesCommand(event.line, "find") && `${event.stdout}${event.stderr}`.includes("access.log");
   }
+  if (id === "finding") return false;
   return singleLine(event.files, ANSWERS[id]) === expected(spec, id);
 }
 
 function mismatch(id: CaseTaskId, spec: OfficeCase, event: GradeContext): string | null {
-  if (id === "find-log") return null;
+  if (id === "find-log" || id === "finding") return null;
   const filename = ANSWERS[id].split("/").pop() ?? "";
   if (!event.line.includes(filename)) return null;
   const file = fileAt(event.files, ANSWERS[id]);
@@ -59,6 +60,7 @@ export function gradeCase(spec: OfficeCase, event: GradeContext): CaseGrade {
   const messages: string[] = [];
   for (const task of CASE_TASKS) {
     if (completed.includes(task.id)) continue;
+    if (task.id === "finding") break;
     if (passes(task.id, spec, event)) {
       completed.push(task.id);
       messages.push(`marked — ${task.marked}`);

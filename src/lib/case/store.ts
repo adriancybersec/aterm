@@ -35,7 +35,12 @@ export function loadCase(): OfficeCase | null {
       cachedCase = null;
       return null;
     }
-    cachedCase = { ...parsed, completed: normalizeCompleted(parsed.completed), notes: parsed.notes.slice(0, 4000) };
+    cachedCase = {
+      ...parsed,
+      finding: typeof parsed.finding === "string" ? parsed.finding.slice(0, 2000) : "",
+      completed: normalizeCompleted(parsed.completed),
+      notes: parsed.notes.slice(0, 4000),
+    };
     return cachedCase;
   } catch {
     cachedCase = null;
@@ -45,7 +50,12 @@ export function loadCase(): OfficeCase | null {
 
 export function saveCase(spec: OfficeCase): void {
   if (typeof window === "undefined") return;
-  const next = { ...spec, notes: spec.notes.slice(0, 4000), completed: normalizeCompleted(spec.completed) };
+  const next = {
+    ...spec,
+    notes: spec.notes.slice(0, 4000),
+    finding: spec.finding.slice(0, 2000),
+    completed: normalizeCompleted(spec.completed),
+  };
   const raw = JSON.stringify(next);
   window.localStorage.setItem(KEY, raw);
   cachedRaw = raw;

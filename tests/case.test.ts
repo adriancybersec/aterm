@@ -4,13 +4,18 @@ import {
   accessLog,
   allowList,
   briefText,
-  CASE_TASKS,
   COMPANY_SITE,
+  evidenceTimeline,
+  findingGaps,
+  findingReady,
   generateCase,
+  isOfficeCase,
   mailLog,
   normalizeCompleted,
+  resumeNote,
   seedFromCase,
   visitsLog,
+  withFinding,
   type OfficeCase,
 } from "../src/lib/case/model";
 import { LabShell, type GradeContext } from "../src/lib/shell/shell";
@@ -50,6 +55,7 @@ const sample: OfficeCase = {
   sites: ["mail.brightwater.example", "files.brightwater.example", "maps.example"],
   suspiciousSite: "metrics-sync.example",
   notes: "",
+  finding: "",
   completed: [],
 };
 
@@ -144,7 +150,7 @@ describe("office case", () => {
 
     const caller = session.run(`echo ${sample.callerIp} > answers/caller.txt`);
     expect(caller.messages).toEqual(["marked — caller IP"]);
-    expect(caller.completed).toEqual(CASE_TASKS.map((task) => task.id));
+    expect(caller.completed).toEqual(["find-log", "scanner", "site", "caller"]);
   });
 
   it("does not open a later step until the one above is marked", () => {
@@ -160,5 +166,26 @@ describe("office case", () => {
 
   it("drops a later tick that skipped a step", () => {
     expect(normalizeCompleted(["caller", "find-log"])).toEqual(["find-log"]);
+    expect(normalizeCompleted(["finding"])).toEqual([]);
+  });
+
+  it("keeps the evidence locked until that step is marked, then checks the finding", () => {
+    expect(evidenceTimeline(sample, []).map((section) => section.title)).toEqual([]);
+    expect(evidenceTimeline(sample, ["find-log", "scanner"]).some((section) => section.lines.some((line) => line.includes("not found")))).toBe(true);
+    expect(evidenceTimeline(sample, ["find-log", "scanner"]).some((section) => section.lines.some((line) => line.includes(sample.suspiciousSite)))).toBe(false);
+
+    const done = { ...sample, completed: ["find-log", "scanner", "site", "caller"] as OfficeCase["completed"] };
+    const short = withFinding(done, `${sample.scannerIp} ${sample.suspiciousSite}`);
+    expect(short.completed.includes("finding")).toBe(false);
+    expect(findingGaps(done, short.finding).length).toBeGreaterThan(0);
+
+    const note = `${sample.scannerIp} tried pages that were not found. The same notes show ${sample.callerIp} opened ${sample.suspiciousSite}, which is not allowed. I would show these log lines to the office.`;
+    expect(findingReady(done, note)).toBe(true);
+    expect(withFinding(done, note).completed).toEqual(["find-log", "scanner", "site", "caller", "finding"]);
+    expect(withFinding(sample, note).completed.includes("finding")).toBe(false);
+    expect(resumeNote()).toContain("Practice log review");
+
+    const older = { ...generateCase(mulberry32(4)), finding: undefined };
+    expect(isOfficeCase(older)).toBe(true);
   });
 });

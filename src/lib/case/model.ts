@@ -28,7 +28,7 @@ const ODD_SITES = [
   "edge-collector.example",
 ];
 
-export type CaseTaskId = "find-log" | "scanner" | "site" | "caller";
+export type CaseTaskId = "find-log" | "scanner" | "site" | "caller" | "finding";
 
 export type CaseTask = {
   id: CaseTaskId;
@@ -82,6 +82,17 @@ export const CASE_TASKS: CaseTask[] = [
     ],
     marked: "caller IP",
   },
+  {
+    id: "finding",
+    prompt: "Write a finding in Report. Name the odd IP, what it did, the website that is not allowed, and what you would tell the office.",
+    hints: [
+      "Open Report. On a phone it is the Report tab. On a wide screen it is the button next to Notes.",
+      "Put in the odd IP and the website you already saved.",
+      "Say what the logs showed. Use plain words such as not found or not allowed.",
+      "Two sentences is enough. It ticks when those facts are in the note.",
+    ],
+    marked: "finding",
+  },
 ];
 
 export type OfficeCase = {
@@ -93,6 +104,7 @@ export type OfficeCase = {
   sites: string[];
   suspiciousSite: string;
   notes: string;
+  finding: string;
   completed: CaseTaskId[];
 };
 
@@ -145,6 +157,7 @@ export function generateCase(rng: () => number = randomUnit): OfficeCase {
     sites: take(BENIGN_SITES, 3, rng),
     suspiciousSite: take(ODD_SITES, 1, rng)[0],
     notes: "",
+    finding: "",
     completed: [],
   };
 }
@@ -300,11 +313,70 @@ export function seedFromCase(spec: OfficeCase): LabSeed {
   return { cwd: "/home/student/case", files };
 }
 
+export function evidenceTimeline(spec: OfficeCase, completed: readonly string[]): { title: string; lines: string[] }[] {
+  const sections: { title: string; lines: string[] }[] = [];
+  if (completed.includes("scanner")) {
+    sections.push({
+      title: "Odd IP",
+      lines: accessLog(spec)
+        .trim()
+        .split("\n")
+        .filter((line) => line.includes("not found")),
+    });
+  }
+  if (completed.includes("site")) {
+    sections.push({
+      title: "Not on the allow list",
+      lines: [spec.suspiciousSite],
+    });
+  }
+  if (completed.includes("caller")) {
+    sections.push({
+      title: "Who opened it",
+      lines: visitsLog(spec)
+        .trim()
+        .split("\n")
+        .filter((line) => line.includes(spec.suspiciousSite)),
+    });
+  }
+  return sections;
+}
+
+export function findingGaps(spec: OfficeCase, text: string): string[] {
+  const body = text.trim();
+  const gaps: string[] = [];
+  if (!body.includes(spec.scannerIp)) gaps.push("Add the odd IP address.");
+  if (spec.callerIp !== spec.scannerIp && !body.includes(spec.callerIp)) gaps.push("Add the IP that opened the website.");
+  if (!body.includes(spec.suspiciousSite)) gaps.push("Add the website that is not allowed.");
+  if (!/not found|not real|not allowed|allow list|allow\.txt/i.test(body)) {
+    gaps.push("Say what they did, in plain words.");
+  }
+  if (body.length < 80) gaps.push("Write at least two sentences.");
+  return gaps;
+}
+
+export function findingReady(spec: OfficeCase, text: string): boolean {
+  return findingGaps(spec, text).length === 0;
+}
+
+export function withFinding(spec: OfficeCase, text: string): OfficeCase {
+  const finding = text.slice(0, 2000);
+  const shellDone = CASE_TASKS.filter((task) => task.id !== "finding").every((task) => spec.completed.includes(task.id));
+  const completed: CaseTaskId[] = spec.completed.filter((id) => id !== "finding");
+  if (shellDone && findingReady(spec, finding)) completed.push("finding");
+  return { ...spec, finding, completed };
+}
+
+export function resumeNote(): string {
+  return "Practice log review (Aterx, Brightwater Office). Read website, visit, and mail logs. Found one IP trying pages that were not found, and one website that was not on the allow list. Wrote a short finding and kept the log lines as evidence.";
+}
+
 export function isOfficeCase(value: unknown): value is OfficeCase {
   if (!value || typeof value !== "object") return false;
   const spec = value as Partial<OfficeCase>;
   if (typeof spec.id !== "string" || !/^[0-9a-f]{8}$/.test(spec.id)) return false;
   if (typeof spec.notes !== "string" || spec.notes.length > 4000) return false;
+  if (spec.finding !== undefined && (typeof spec.finding !== "string" || spec.finding.length > 2000)) return false;
   const ips = [spec.scannerIp, spec.callerIp, ...(spec.staffIps ?? []), ...(spec.noiseIps ?? [])];
   if (!spec.staffIps || spec.staffIps.length !== 4 || !spec.noiseIps || spec.noiseIps.length !== 2) return false;
   if (!ips.every((ip) => typeof ip === "string" && IP_PATTERN.test(ip))) return false;
